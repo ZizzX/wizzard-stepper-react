@@ -151,5 +151,13 @@ const config: IWizardConfig = {
 - `goToStep(id)`: Jumps to specific step.
 - `allErrors`: Map of validation errors.
 
+## Demos
+
+Check out the [official demo repository](https://github.com/ZizzX/wizzard-stepper-react-demo) for a complete implementation featuring:
+- **Tailwind CSS v4** UI overhaul.
+- **React Hook Form + Zod** integration.
+- **Formik + Yup** integration.
+- **Conditional Routing** logic.
+
 ## License
 MIT
