@@ -153,7 +153,7 @@ const config: IWizardConfig = {
 
 ## Demos
 
-Check out the [official demo repository](https://github.com/ZizzX/wizzard-stepper-react-demo) for a complete implementation featuring:
+Check out the [Live Demo](https://ZizzX.github.io/wizzard-stepper-react-demo/) or the [source code](https://github.com/ZizzX/wizzard-stepper-react-demo) for a complete implementation featuring:
 - **Tailwind CSS v4** UI overhaul.
 - **React Hook Form + Zod** integration.
 - **Formik + Yup** integration.
