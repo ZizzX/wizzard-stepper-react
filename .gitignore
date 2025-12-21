@@ -1,6 +1,11 @@
 node_modules
-dist
 .DS_Store
 *.tsbuildinfo
 coverage
 examples/demo
+.vscode
+.idea
+*.log
+.npm
+__tests__/__snapshots__
+dist

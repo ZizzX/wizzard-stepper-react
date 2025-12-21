@@ -59,21 +59,30 @@ export function WizardProvider<T extends Record<string, any>>({
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === activeSteps.length - 1;
 
+  // Constants
+  const META_KEY = '__wizzard_meta__';
+
   // Hydration Helper
   const hydrate = useCallback(() => {
     setIsLoading(true);
-    // TODO: Implement full hydration logic (restore data, currentStep, visited, etc if persisted)
-    // For now, we hydrate data per step on demand or global data? 
-    // Usually persistence saves "wizard_data" or per step. 
-    // If saving per step, we need to merge.
-    // If simpler, let's assume we save globally for now or iterate steps.
     
-    // Simplistic hydration for now:
-    // If the adapter supports 'wizard_data', load it. 
-    // We didn't define a global key in interface, just saveStep. 
-    // Adapters might need 'save' for global or we iterate?
-    // Let's assume we load data for *all* steps
-    
+    // 1. Load Metadata (Current Step, Visited, etc.)
+    const metaFn = persistenceAdapter.getStep<{
+      currentStepId: string;
+      visited: string[];
+      completed: string[];
+    }>(META_KEY);
+
+    if (metaFn) {
+       if (metaFn.currentStepId) setCurrentStepId(metaFn.currentStepId);
+       if (metaFn.visited) setVisitedSteps(new Set(metaFn.visited));
+       if (metaFn.completed) setCompletedSteps(new Set(metaFn.completed));
+    }
+
+    // 2. Load Data
+    // We assume data is distributed across steps OR stored centrally.
+    // Given the current implementation saves 'wizardData' to each stepId, 
+    // we can iterate steps.
     const loadedData: Partial<T> = {};
     config.steps.forEach(step => {
        const stepData = persistenceAdapter.getStep(step.id);
@@ -96,8 +105,13 @@ export function WizardProvider<T extends Record<string, any>>({
   const saveData = useCallback((mode: PersistenceMode, stepId: string, data: any) => {
     if (mode === persistenceMode || mode === 'manual') {
         persistenceAdapter.saveStep(stepId, data);
+        
+        // Also save metadata whenever we save data (if appropriate)
+        // Or we can save metadata explicitly on navigation.
     }
   }, [persistenceAdapter, persistenceMode]);
+
+  // Explicit Metadata Save
 
   // Action: Set Step Data
   const setStepData = useCallback((stepId: string, data: any) => {
@@ -105,7 +119,9 @@ export function WizardProvider<T extends Record<string, any>>({
       const newData = { ...prev, ...data };
       // Save if mode is 'onChange'
       if (persistenceMode === 'onChange') {
-         saveData('onChange', stepId, data); // Debounce could be added here
+         // We must save the FULL new data, not just the partial 'data' update, 
+         // otherwise we overwrite the storage with just the single field.
+         saveData('onChange', stepId, newData); 
       }
       return newData;
     });
@@ -125,11 +141,6 @@ export function WizardProvider<T extends Record<string, any>>({
     // Check if adapter exists
     if (!step.validationAdapter) return true;
 
-    // We assume data for step is subset of wizardData or wizardData itself?
-    // Usually validation runs on the *whole* data or *step* data.
-    // Let's pass the global wizardData for context-aware validation, 
-    // OR expected step structure. Adapter defines TData.
-    // We pass `wizardData` to adapter. User adapter filters if needed.
     const result = await step.validationAdapter.validate(wizardData);
     
     if (!result.isValid) {
@@ -165,7 +176,6 @@ export function WizardProvider<T extends Record<string, any>>({
 
   // Navigation
   const goToStep = useCallback(async (stepId: string) => {
-    // Check flow logic? usually users can jump back, but jumping forward requires validation of previous?
     const targetIndex = activeSteps.findIndex(s => s.id === stepId);
     if (targetIndex === -1) return;
 
@@ -178,41 +188,59 @@ export function WizardProvider<T extends Record<string, any>>({
        }
     }
     
-    // Save current step on change
+    // Save current step data logic
     if (persistenceMode === 'onStepChange' && currentStep) {
-        // We usually save specific step data. But here 'wizardData' is global.
-        // We rely on 'setStepData' having updated 'wizardData'.
-        // We just need to trigger persistence for this step if it wasn't manual.
-        // Actually, 'onStepChange' usually implies saving state *now* 
-        // We'll save the *current* step's data part? or just trigger save?
-        // Since wizardData is global, let's trying to save partial?
-        // Or just save the whole thing keyed by step? 
-        // Simpler: Save 'wizardData' into the step (or global).
-        // The interface `saveStep(stepId, data)` suggests per-step.
-        // We'll pass `wizardData` for now. User adapter decides.
         saveData('onStepChange', currentStepId, wizardData); 
     }
 
-    setVisitedSteps(prev => new Set(prev).add(currentStepId));
+    // Update State
+    const nextVisited = new Set(visitedSteps).add(currentStepId);
+    setVisitedSteps(nextVisited);
     setCurrentStepId(stepId);
+    
+    // Persist Metadata (New Step Position)
+    // We need to pass the *new* values because state updates are async
+    if (persistenceMode !== 'manual') {
+        persistenceAdapter.saveStep(META_KEY, {
+            currentStepId: stepId,
+            visited: Array.from(nextVisited),
+            completed: Array.from(completedSteps)
+        });
+    }
+
     window.scrollTo(0, 0);
-  }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep]);
+  }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep, visitedSteps, completedSteps, persistenceAdapter]);
 
   const goToNextStep = useCallback(async () => {
      if (isLastStep) return;
      const nextStep = activeSteps[currentStepIndex + 1];
      if (nextStep) {
-       // Mark current as completed if valid? 
-       // Only mark completed if moved past.
-       await goToStep(nextStep.id);
-       // If successful move (currentStepId changed), mark prev as completed?
-       // Logic is tricky cause goToStep is async but state update is scheduled.
-       // We can assume if we are here (and logic flows), we might update state.
-       // Better: effect listening to step change updates completion?
-       // Or just setCompleted inside goToStep?
-       setCompletedSteps(prev => new Set(prev).add(currentStepId));
+        // Mark completed logic
+        const nextCompleted = new Set(completedSteps).add(currentStepId);
+        setCompletedSteps(nextCompleted);
+        
+        // Pass updated completed set to goToStep if we could, but goToStep uses state.
+        // We really should update metadata *after* state updates or pass explicit values.
+        // For simplicity, let's allow goToStep to handle transition, but we need to ensure 'completed' is saved.
+        // Let's update state, then call goToStep.
+        
+        await goToStep(nextStep.id);
+        
+        // Since goToStep saves metadata using *current* (stale) completedSteps state, 
+        // we might miss the 'completed' update in storage until next move.
+        // FIX: Let's explicitly save metadata here with new values if needed, 
+        // OR better: Just rely on React state consistency? No, inside async function state is stale.
+        
+        // Workaround: We'll save metadata again here with correct values.
+         if (persistenceMode !== 'manual') {
+             persistenceAdapter.saveStep(META_KEY, {
+                 currentStepId: nextStep.id,
+                 visited: Array.from(new Set(visitedSteps).add(currentStepId)),
+                 completed: Array.from(nextCompleted)
+             });
+         }
      }
-  }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep]);
+  }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep, visitedSteps, completedSteps, persistenceMode, persistenceAdapter]);
 
   const goToPrevStep = useCallback(() => {
      if (isFirstStep) return;
