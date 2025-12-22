@@ -29,18 +29,10 @@ jobs:
       - name: Build Library
         run: npm run build
 
-      - name: Install Demo Dependencies
-        run: npm ci
-
-      - name: Build Demo
-        run: |
-          cd examples/demo
-          npm run build
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: examples/demo/dist
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
