@@ -1,4 +1,5 @@
 import { useWizard } from 'wizzard-stepper-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 
 export const StepperControls = () => {
@@ -12,14 +13,17 @@ export const StepperControls = () => {
     isLoading,
     clearStorage,
   } = useWizard();
+  const navigate = useNavigate();
 
   if (isLoading) return null;
 
   const handleNext = async () => {
     if (isLastStep) {
       clearStorage();
+      navigate('/');
+    } else {
+      await goToNextStep();
     }
-    await goToNextStep();
   };
 
   return (

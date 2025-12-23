@@ -149,7 +149,7 @@ const WizardInner = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLastStep) {
-      alert('Wizard Completed!');
+      clearStorage();
     } else {
       await goToNextStep();
     }
