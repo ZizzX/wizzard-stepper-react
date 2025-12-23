@@ -5,6 +5,7 @@ import SimpleWizard from './pages/SimpleWizard';
 import RHFZodWizard from './pages/RHFZodWizard';
 import FormikYupWizard from './pages/FormikYupWizard';
 import ConditionalWizard from './pages/ConditionalWizard';
+import ComplexDataWizard from './pages/ComplexDataWizard';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="rhf-zod" element={<RHFZodWizard />} />
         <Route path="formik-yup" element={<FormikYupWizard />} />
         <Route path="conditional" element={<ConditionalWizard />} />
+        <Route path="complex" element={<ComplexDataWizard />} />
       </Route>
     </Routes>
   );
