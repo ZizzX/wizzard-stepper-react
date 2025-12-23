@@ -1,6 +1,6 @@
 {
   "name": "wizzard-stepper-react",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
   "type": "module",
   "main": "dist/index.js",
@@ -14,7 +14,15 @@
     "build": "tsup",
     "lint": "eslint src/**",
     "test": "vitest",
-    "release": "standard-version"
+    "test:run": "vitest run",
+    "release": "standard-version",
+    "commit": "cz",
+    "prepare": "husky"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   },
   "keywords": [
     "react",
