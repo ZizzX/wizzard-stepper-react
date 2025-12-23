@@ -2,7 +2,7 @@ name: Deploy Demo
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,8 +23,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       # Install root dependencies (needed for workspace/linting context)
       - name: Install Root Dependencies
@@ -38,7 +38,12 @@ jobs:
       # Build the demo app
       - name: Build Demo
         working-directory: examples/demo
-        run: npm run build
+        run: |
+          npm run build
+          echo "Build finished. Listing directory:"
+          ls -la
+          echo "Listing dist:"
+          ls -la dist || echo "dist not found"
 
       - name: List files in demo directory
         run: ls -R examples/demo
