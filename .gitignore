@@ -2,7 +2,9 @@ node_modules
 .DS_Store
 *.tsbuildinfo
 coverage
-examples/demo
+examples/demo/node_modules
+examples/demo/dist
+examples/demo/.vite
 .vscode
 .idea
 *.log
