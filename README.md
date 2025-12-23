@@ -14,9 +14,9 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 ## Installation
 
 ```bash
-npm install wizzard-stepper-react zod
+npm install wizzard-stepper-react
 # or
-yarn add wizzard-stepper-react zod
+yarn add wizzard-stepper-react
 ```
 
 ## Quick Start (Native Forms)
