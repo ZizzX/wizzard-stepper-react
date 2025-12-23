@@ -1,4 +1,5 @@
 import { WizardProvider, useWizard, type IWizardConfig, LocalStorageAdapter, type IValidatorAdapter, type ValidationResult } from 'wizzard-stepper-react';
+import { useEffect } from 'react';
 import { StepperControls } from '../components/StepperControls';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent, CardFooter } from '../components/ui/Card';
@@ -131,7 +132,13 @@ const wizardConfig: IWizardConfig = {
 
 // 4. Main Wrapper
 const WizardContent = () => {
-  const { currentStep } = useWizard();
+  const { currentStep, clearStorage } = useWizard();
+
+  useEffect(() => {
+    return () => {
+      clearStorage();
+    };
+  }, [clearStorage]);
   
   if (!currentStep) return null;
 

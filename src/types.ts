@@ -126,6 +126,16 @@ export interface IWizardContext<T = unknown> {
     handleStepChange: (field: string, value: any) => void; // Helper for simple forms
 
     /**
+     * Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[0].value')
+     */
+    setData: (path: string, value: any) => void;
+
+    /**
+     * Get data by path
+     */
+    getData: (path: string, defaultValue?: any) => any;
+
+    /**
      * Validation & Persistence
      */
     validateStep: (stepId: string) => Promise<boolean>;

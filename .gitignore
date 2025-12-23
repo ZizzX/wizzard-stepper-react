@@ -10,3 +10,6 @@ coverage
 __tests__/__snapshots__
 dist
 .npmrc
+
+# AI Rules - keep local only
+.ai-rules.md

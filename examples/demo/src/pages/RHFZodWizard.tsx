@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WizardProvider, useWizard, type IWizardConfig, ZodAdapter, LocalStorageAdapter } from 'wizzard-stepper-react';
+import { useEffect } from 'react';
 import { StepperControls } from '../components/StepperControls';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent, CardFooter } from '../components/ui/Card';
@@ -121,7 +122,14 @@ const wizardConfig: IWizardConfig = {
 };
 
 const WizardContent = () => {
-    const { currentStep, wizardData } = useWizard();
+    const { currentStep, wizardData, clearStorage } = useWizard();
+
+    useEffect(() => {
+      return () => {
+        clearStorage();
+      };
+    }, [clearStorage]);
+
     if (!currentStep) return null;
 
     return (

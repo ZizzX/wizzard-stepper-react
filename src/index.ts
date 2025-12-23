@@ -7,3 +7,4 @@ export * from './adapters/persistence/LocalStorageAdapter';
 
 export * from './adapters/validation/ZodAdapter';
 export * from './adapters/validation/YupAdapter';
+export * from './utils/data';

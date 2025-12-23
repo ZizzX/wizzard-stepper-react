@@ -32,6 +32,13 @@ export default function Home() {
       icon: '🔀',
       color: 'bg-emerald-50 text-emerald-600',
     },
+    {
+      title: 'Complex Data',
+      description: 'Manage nested objects and arrays with deep path updates.',
+      path: '/complex',
+      icon: '📊',
+      color: 'bg-amber-50 text-amber-600',
+    },
   ];
 
   return (

@@ -6,6 +6,7 @@ import type {
   IPersistenceAdapter,
 } from '../types';
 import { MemoryAdapter } from '../adapters/persistence/MemoryAdapter';
+import { getByPath, setByPath } from '../utils/data';
 
 const WizardContext = createContext<IWizardContext<any> | undefined>(undefined);
 
@@ -127,11 +128,28 @@ export function WizardProvider<T extends Record<string, any>>({
     });
   }, [persistenceMode, saveData]);
 
+  // Action: Set Data by Path
+  const setData = useCallback((path: string, value: any) => {
+    setWizardData((prev) => {
+      const newData = setByPath(prev, path, value);
+      
+      if (persistenceMode === 'onChange') {
+        saveData('onChange', currentStepId, newData);
+      }
+      return newData;
+    });
+  }, [persistenceMode, saveData, currentStepId]);
+
+  // Action: Get Data by Path
+  const getData = useCallback((path: string, defaultValue?: any) => {
+    return getByPath(wizardData, path, defaultValue);
+  }, [wizardData]);
+
   // Action: Handle specific field change (helper)
   const handleStepChange = useCallback((field: string, value: any) => {
     if (!currentStepId) return;
-    setStepData(currentStepId, { [field]: value });
-  }, [currentStepId, setStepData]);
+    setData(field, value);
+  }, [setData, currentStepId]);
   
   // Validation Logic
   const validateStep = useCallback(async (stepId: string): Promise<boolean> => {
@@ -265,8 +283,10 @@ export function WizardProvider<T extends Record<string, any>>({
     handleStepChange,
     validateStep,
     validateAll,
-    save: () => saveData('manual', currentStepId, wizardData),
-    clearStorage: () => persistenceAdapter.clear(),
+    save: useCallback(() => saveData('manual', currentStepId, wizardData), [saveData, currentStepId, wizardData]),
+    clearStorage: useCallback(() => persistenceAdapter.clear(), [persistenceAdapter]),
+    setData,
+    getData,
   };
 
   return <WizardContext.Provider value={value}>{children}</WizardContext.Provider>;
