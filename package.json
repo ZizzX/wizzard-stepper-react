@@ -1,6 +1,6 @@
 {
   "name": "wizzard-stepper-react",
-  "version": "1.2.1",
+  "version": "1.5.1",
   "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -8,9 +8,9 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -22,9 +22,12 @@
     "lint": "eslint src/**",
     "test": "vitest",
     "test:run": "vitest run",
-    "release": "standard-version",
+    "release": "release-it",
     "commit": "cz",
-    "prepare": "husky"
+    "prepare": "husky || true"
+  },
+  "overrides": {
+    "glob": "^9.0.0"
   },
   "config": {
     "commitizen": {
@@ -48,7 +51,7 @@
     "url": "https://github.com/ZizzX/wizzard-stepper-react/issues",
     "email": "zizzxiii@gmail.com"
   },
-  "homepage": "https://zizzx.github.io/wizzard-stepper-react-demo/",
+  "homepage": "https://zizzx.github.io/wizzard-stepper-react/",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
@@ -66,6 +69,7 @@
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
+    "@release-it/conventional-changelog": "^10.0.4",
     "@types/node": "^25.0.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
@@ -74,7 +78,7 @@
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "prettier": "^3.7.4",
-    "standard-version": "^9.5.0",
+    "release-it": "^19.2.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16",

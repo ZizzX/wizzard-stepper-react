@@ -11,6 +11,7 @@ export default function Layout() {
     { path: '/rhf-zod', label: 'RHF + Zod' },
     { path: '/formik-yup', label: 'Formik + Yup' },
     { path: '/conditional', label: 'Conditional' },
+    { path: '/complex', label: 'Complex Data' },
   ];
 
   return (

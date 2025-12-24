@@ -52,6 +52,15 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown> {
      * Override global auto-validation setting for this step
      */
     autoValidate?: boolean;
+    /**
+     * Optional React Component to render for this step.
+     * Used by the <WizardStepRenderer /> component.
+     */
+    component?: React.ComponentType<any>;
+    /**
+     * Override global persistence adapter for this specific step.
+     */
+    persistenceAdapter?: IPersistenceAdapter;
 }
 
 /**
@@ -62,7 +71,7 @@ export interface IWizardConfig<T = unknown> {
     /**
      * Array of step configurations
      */
-    steps: IStepConfig<any, T>[];
+    steps: IStepConfig<unknown, T>[];
     /**
      * Global auto-validation setting (default: true)
      */
@@ -78,22 +87,28 @@ export interface IWizardConfig<T = unknown> {
          */
         storageKey?: string;
     };
+    /**
+     * Callback triggered when step changes.
+     * Useful for routing integration or analytics.
+     */
+    onStepChange?: (fromStep: string | null, toStep: string, data: T) => void;
 }
 
 /**
  * Core Wizard Context State
  */
 export interface IWizardContext<T = unknown> {
-    currentStep: IStepConfig<any, T> | null;
+    currentStep: IStepConfig<unknown, T> | null;
     currentStepIndex: number;
     isFirstStep: boolean;
     isLastStep: boolean;
     isLoading: boolean;
+    isPending?: boolean;
 
     /**
      * Active steps (those meeting conditions)
      */
-    activeSteps: IStepConfig<any, T>[];
+    activeSteps: IStepConfig<unknown, T>[];
 
     /**
      * Unified Wizard Data
@@ -117,19 +132,36 @@ export interface IWizardContext<T = unknown> {
      */
     goToNextStep: () => Promise<void>;
     goToPrevStep: () => void;
-    goToStep: (stepId: string) => void;
+    goToStep: (stepId: string) => Promise<boolean>;
 
     /**
      * Data Actions
      */
-    setStepData: (stepId: string, data: any) => void; // Internal use usually
-    handleStepChange: (field: string, value: any) => void; // Helper for simple forms
+    setStepData: (stepId: string, data: unknown) => void; // Internal use usually
+    handleStepChange: (field: string, value: unknown) => void; // Helper for simple forms
+
+    /**
+     * Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[0].value')
+     */
+    setData: (path: string, value: unknown, options?: { debounceValidation?: number }) => void;
+
+    /**
+     * Bulk update wizard data.
+     * @param data Partial data to merge.
+     * @param options.replace If true, replaces entire state instead of merging.
+     */
+    updateData: (data: Partial<T>, options?: { replace?: boolean }) => void;
+
+    /**
+     * Get data by path
+     */
+    getData: (path: string, defaultValue?: unknown) => unknown;
 
     /**
      * Validation & Persistence
      */
-    validateStep: (stepId: string) => Promise<boolean>;
-    validateAll: () => Promise<boolean>;
+    validateStep: (sid: string) => Promise<boolean>;
+    validateAll: () => Promise<{ isValid: boolean; errors: Record<string, Record<string, string>> }>;
     save: () => void; // Manual persistence save
     clearStorage: () => void;
 }
