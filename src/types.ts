@@ -89,6 +89,7 @@ export interface IWizardContext<T = unknown> {
     isFirstStep: boolean;
     isLastStep: boolean;
     isLoading: boolean;
+    isPending?: boolean;
 
     /**
      * Active steps (those meeting conditions)
@@ -117,7 +118,7 @@ export interface IWizardContext<T = unknown> {
      */
     goToNextStep: () => Promise<void>;
     goToPrevStep: () => void;
-    goToStep: (stepId: string) => void;
+    goToStep: (stepId: string) => Promise<boolean>;
 
     /**
      * Data Actions
@@ -128,7 +129,7 @@ export interface IWizardContext<T = unknown> {
     /**
      * Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[0].value')
      */
-    setData: (path: string, value: unknown) => void;
+    setData: (path: string, value: unknown, options?: { debounceValidation?: number }) => void;
 
     /**
      * Get data by path

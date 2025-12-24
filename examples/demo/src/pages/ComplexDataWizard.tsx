@@ -1,42 +1,21 @@
 import React, { useEffect, useCallback } from "react";
-import {
-  type IWizardConfig,
-  ZodAdapter,
-  createWizardFactory,
-} from "wizzard-stepper-react";
-import { z } from "zod";
+import type { IWizardConfig } from "wizzard-stepper-react";
+import { ZodAdapter } from "wizzard-stepper-react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
-
-// 1. Define Schema with nested arrays
-const schema = z.object({
-  parentName: z.string().min(1, "Parent name is required"),
-  children: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string().min(1, "Child name is required"),
-        age: z.coerce.number().min(0, "Age must be positive"),
-      })
-    )
-    .min(1, "At least one child is required"),
-});
-
-type FormData = z.infer<typeof schema>;
-type Child = FormData["children"][0];
-
-// 2. Create Typed Wizard Factory
-// This gives us hooks strictly typed to FormData
-const {
+import {
   WizardProvider,
   useWizard,
   useWizardValue,
   useWizardActions,
   useWizardError,
   useWizardSelector,
-} = createWizardFactory<FormData>();
+  complexSchema,
+  type ComplexFormData,
+  type Child,
+} from "../wizards/complex-wizard";
 
 // 3. Define Steps using Typed Hooks
 const Step1 = React.memo(() => {
@@ -136,7 +115,7 @@ const Step2 = React.memo(() => {
 
   const addChild = useCallback(() => {
     // getData is also typed!
-    const currentChildren = getData("children") || [];
+    const currentChildren = (getData("children") || []) as Child[];
     const newChildren = [
       ...currentChildren,
       { id: crypto.randomUUID(), name: "", age: 0 },
@@ -146,7 +125,7 @@ const Step2 = React.memo(() => {
 
   const removeChild = useCallback(
     (id: string) => {
-      const currentChildren = getData("children") || [];
+      const currentChildren = (getData("children") || []) as Child[];
       const newChildren = currentChildren.filter((c: Child) => c.id !== id);
       setData("children", newChildren);
     },
@@ -203,17 +182,19 @@ const Step3 = React.memo(() => {
 });
 
 // 4. Config matches FormData
-const wizardConfig: IWizardConfig<FormData> = {
+const wizardConfig: IWizardConfig<ComplexFormData> = {
   steps: [
     {
       id: "parent",
       label: "Parent",
-      validationAdapter: new ZodAdapter(schema.pick({ parentName: true })),
+      validationAdapter: new ZodAdapter(
+        complexSchema.pick({ parentName: true })
+      ),
     },
     {
       id: "children",
       label: "Children",
-      validationAdapter: new ZodAdapter(schema.pick({ children: true })),
+      validationAdapter: new ZodAdapter(complexSchema.pick({ children: true })),
     },
     { id: "summary", label: "Summary" },
   ],

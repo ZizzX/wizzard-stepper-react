@@ -1,5 +1,5 @@
 import { useWizardContext } from '../context/WizardContext';
 
-export const useWizard = <T = any>() => {
+export const useWizard = <T = unknown>() => {
     return useWizardContext<T>();
 };

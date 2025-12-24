@@ -13,15 +13,53 @@ import type {
   IWizardConfig,
   PersistenceMode,
   IPersistenceAdapter,
+  IStepConfig,
+  IWizardContext,
 } from "../types";
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
 import { getByPath, setByPath } from "../utils/data";
 
-const WizardStateContext = createContext<any | undefined>(undefined);
-const WizardActionsContext = createContext<any | undefined>(undefined);
+export interface IWizardState<T = unknown> {
+  currentStep: IStepConfig<unknown, T> | null;
+  currentStepIndex: number;
+  isFirstStep: boolean;
+  isLastStep: boolean;
+  isLoading: boolean;
+  isPending: boolean;
+  activeSteps: IStepConfig<unknown, T>[];
+  visitedSteps: Set<string>;
+  completedSteps: Set<string>;
+  errorSteps: Set<string>;
+  store: WizardStore<T>;
+}
+
+export interface IWizardActions {
+  goToNextStep: () => Promise<void>;
+  goToPrevStep: () => void;
+  goToStep: (stepId: string) => Promise<boolean>;
+  setStepData: (stepId: string, data: unknown) => void;
+  handleStepChange: (field: string, value: unknown) => void;
+  validateStep: (sid: string) => Promise<boolean>;
+  validateAll: () => Promise<boolean>;
+  save: () => void;
+  clearStorage: () => void;
+  setData: (
+    path: string,
+    value: unknown,
+    options?: { debounceValidation?: number }
+  ) => void;
+  getData: (path: string, defaultValue?: unknown) => unknown;
+}
+
+const WizardStateContext = createContext<IWizardState<any> | undefined>(
+  undefined
+);
+const WizardActionsContext = createContext<IWizardActions | undefined>(
+  undefined
+);
 
 // Advanced: Store for granular subscriptions
-class WizardStore<T> {
+export class WizardStore<T> {
   private state: { data: T; errors: Record<string, Record<string, string>> };
   private listeners: Set<() => void> = new Set();
 
@@ -391,7 +429,7 @@ export function WizardProvider<T extends Record<string, any>>({
   );
 
   // Split values
-  const stateValue = useMemo(
+  const stateValue = useMemo<IWizardState<T>>(
     () => ({
       currentStep,
       currentStepIndex,
@@ -419,7 +457,7 @@ export function WizardProvider<T extends Record<string, any>>({
     ]
   );
 
-  const actionsValue = useMemo(
+  const actionsValue = useMemo<IWizardActions>(
     () => ({
       goToNextStep,
       goToPrevStep,
@@ -458,12 +496,12 @@ export function WizardProvider<T extends Record<string, any>>({
   );
 }
 
-export function useWizardState() {
+export function useWizardState<T = unknown>(): IWizardState<T> {
   const context = useContext(WizardStateContext);
   if (!context) {
     throw new Error("useWizardState must be used within a WizardProvider");
   }
-  return context;
+  return context as IWizardState<T>;
 }
 
 export function useWizardValue<TValue = any>(path: string): TValue {
@@ -538,7 +576,7 @@ export function useWizardSelector<TSelected = any>(
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
-export function useWizardActions() {
+export function useWizardActions(): IWizardActions {
   const context = useContext(WizardActionsContext);
   if (!context) {
     throw new Error("useWizardActions must be used within a WizardProvider");
@@ -546,8 +584,10 @@ export function useWizardActions() {
   return context;
 }
 
-export function useWizardContext<T = any>() {
-  const state = useWizardState();
+export function useWizardContext<T = unknown>(): IWizardContext<T> & {
+  store: WizardStore<T>;
+} {
+  const state = useWizardState<T>();
   const actions = useWizardActions();
 
   // Backward compatibility: subscribe to everything
