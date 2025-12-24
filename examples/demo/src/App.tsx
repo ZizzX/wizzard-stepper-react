@@ -16,11 +16,14 @@ import Installation from "./pages/docs/Installation";
 import QuickStart from "./pages/docs/QuickStart";
 import CoreConcepts from "./pages/docs/CoreConcepts";
 import HooksApi from "./pages/docs/HooksApi";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="examples" element={<Examples />} />
         
@@ -49,7 +52,8 @@ function App() {
           <Route path="*" element={<Introduction />} />
         </Route>
       </Route>
-    </Routes>
+      </Routes>
+    </>
   );
 }
 
