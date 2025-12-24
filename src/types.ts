@@ -146,6 +146,13 @@ export interface IWizardContext<T = unknown> {
     setData: (path: string, value: unknown, options?: { debounceValidation?: number }) => void;
 
     /**
+     * Bulk update wizard data.
+     * @param data Partial data to merge.
+     * @param options.replace If true, replaces entire state instead of merging.
+     */
+    updateData: (data: Partial<T>, options?: { replace?: boolean }) => void;
+
+    /**
      * Get data by path
      */
     getData: (path: string, defaultValue?: unknown) => unknown;

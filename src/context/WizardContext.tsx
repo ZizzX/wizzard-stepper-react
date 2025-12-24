@@ -48,6 +48,7 @@ export interface IWizardActions {
     value: unknown,
     options?: { debounceValidation?: number }
   ) => void;
+  updateData: (data: Partial<any>, options?: { replace?: boolean }) => void;
   getData: (path: string, defaultValue?: unknown) => unknown;
 }
 
@@ -326,6 +327,28 @@ export function WizardProvider<T extends Record<string, any>>({
     [persistenceMode, saveData, currentStepId, validateStep]
   );
 
+  const updateData = useCallback(
+    (data: Partial<T>, options?: { replace?: boolean }) => {
+      const prevData = storeRef.current.getSnapshot().data;
+      const newData = options?.replace ? (data as T) : { ...prevData, ...data };
+
+      // 1. Update Store
+      storeRef.current.update(newData);
+
+      // 2. Update React State
+      startTransition(() => {
+        setWizardData(newData);
+      });
+
+      // 3. Persist
+      // Auto-fill should implicitly update storage regardless of mode
+      config.steps.forEach((step) => {
+        saveData("manual", step.id, newData);
+      });
+    },
+    [saveData, config.steps]
+  );
+
   const getData = useCallback((path: string, defaultValue?: any) => {
     return getByPath(storeRef.current.getSnapshot().data, path, defaultValue);
   }, []);
@@ -495,6 +518,7 @@ export function WizardProvider<T extends Record<string, any>>({
       save,
       clearStorage,
       setData,
+      updateData,
       getData,
     }),
     [
@@ -508,6 +532,7 @@ export function WizardProvider<T extends Record<string, any>>({
       save,
       clearStorage,
       setData,
+      updateData,
       getData,
     ]
   );

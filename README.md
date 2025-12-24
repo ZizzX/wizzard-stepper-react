@@ -130,6 +130,15 @@ setData('items[0].value', 'New Value');
 
 // Get with default value
 const name = getData('user.profile.name', 'Anonymous');
+
+// 🆕 Bulk Update (Autofill)
+const autoFillParams = () => {
+  // Merges into existing data
+  updateData({ 
+    name: 'John Doe',
+    email: 'john@example.com' 
+  });
+};
 ```
 
 ## Performance & Optimization 🚀
