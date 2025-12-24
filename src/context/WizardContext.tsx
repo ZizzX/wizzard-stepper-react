@@ -40,7 +40,10 @@ export interface IWizardActions {
   setStepData: (stepId: string, data: unknown) => void;
   handleStepChange: (field: string, value: unknown) => void;
   validateStep: (sid: string) => Promise<boolean>;
-  validateAll: () => Promise<boolean>;
+  validateAll: () => Promise<{
+    isValid: boolean;
+    errors: Record<string, Record<string, string>>;
+  }>;
   save: () => void;
   clearStorage: () => void;
   setData: (
@@ -368,14 +371,18 @@ export function WizardProvider<T extends Record<string, any>>({
     [setData, currentStepId]
   );
 
-  const validateAll = useCallback(async (): Promise<boolean> => {
+  const validateAll = useCallback(async (): Promise<{
+    isValid: boolean;
+    errors: Record<string, Record<string, string>>;
+  }> => {
     let isValid = true;
     const currentData = storeRef.current.getSnapshot().data;
     for (const step of activeSteps) {
       const stepValid = await validateStep(step.id, currentData);
       if (!stepValid) isValid = false;
     }
-    return isValid;
+    const finalErrors = storeRef.current.getSnapshot().errors;
+    return { isValid, errors: finalErrors };
   }, [activeSteps, validateStep]);
 
   const goToStep = useCallback(

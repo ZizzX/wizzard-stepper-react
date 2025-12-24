@@ -7,6 +7,7 @@ import {
   useWizardValue,
   useWizardError,
   advancedConfig,
+  type DemoData,
 } from "../wizards/advanced-wizard";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
@@ -17,10 +18,11 @@ import { motion, AnimatePresence } from "framer-motion";
 // --- Components ---
 
 const DataToolbar = () => {
-  const { updateData, clearStorage } = useWizardActions();
-  const { currentStep } = useWizard();
+  const { updateData, clearStorage, validateAll, goToStep } =
+    useWizardActions();
+  const { currentStep, allErrors } = useWizard();
 
-  const handleAutofill = () => {
+  const handleAutofill = async () => {
     updateData({
       personal: {
         firstName: "Auto",
@@ -32,6 +34,12 @@ const DataToolbar = () => {
         newsletter: true,
       },
     });
+    const { isValid, errors } = await validateAll();
+
+    if (!isValid) {
+      console.log("errors", errors);
+      goToStep(Object.keys(errors)[0]);
+    }
   };
 
   const handleClear = () => {
@@ -39,30 +47,46 @@ const DataToolbar = () => {
     window.location.reload();
   };
 
+  const hasErrors = Object.keys(allErrors).length > 0;
+
   return (
-    <div className="bg-gray-800 text-white p-4 rounded-lg mb-6 flex justify-between items-center shadow-lg">
-      <div className="text-sm">
-        <span className="font-bold text-yellow-400">Current Step:</span>{" "}
-        {currentStep?.id}
+    <div className="space-y-4 mb-6">
+      <div className="bg-gray-800 text-white p-4 rounded-lg flex justify-between items-center shadow-lg">
+        <div className="text-sm">
+          <span className="font-bold text-yellow-400">Current Step:</span>{" "}
+          {currentStep?.id}
+        </div>
+        <div className="space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-white border-white/20 hover:bg-white/10"
+            onClick={handleAutofill}
+          >
+            🪄 Autofill
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-red-300 hover:text-red-100"
+            onClick={handleClear}
+          >
+            🗑️ Clear
+          </Button>
+        </div>
       </div>
-      <div className="space-x-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-white border-white/20 hover:bg-white/10"
-          onClick={handleAutofill}
+
+      {/* Validation Debug Widget */}
+      {hasErrors && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-50 border border-red-200 rounded-md p-3 text-xs text-red-700 font-mono"
         >
-          🪄 Autofill
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-red-300 hover:text-red-100"
-          onClick={handleClear}
-        >
-          🗑️ Clear
-        </Button>
-      </div>
+          <p className="font-bold mb-1">Validation Errors (Live):</p>
+          <pre>{JSON.stringify(allErrors, null, 2)}</pre>
+        </motion.div>
+      )}
     </div>
   );
 };
@@ -83,20 +107,30 @@ const PersonalStep = () => {
         <Input
           label="First Name"
           value={firstName || ""}
-          onChange={(e) => setData("personal.firstName", e.target.value)}
+          onChange={(e) =>
+            setData("personal.firstName", e.target.value, {
+              debounceValidation: 400,
+            })
+          }
           error={useWizardError("personal.firstName")}
         />
         <Input
           label="Last Name"
           value={lastName || ""}
-          onChange={(e) => setData("personal.lastName", e.target.value)}
+          onChange={(e) =>
+            setData("personal.lastName", e.target.value, {
+              debounceValidation: 400,
+            })
+          }
           error={useWizardError("personal.lastName")}
         />
       </div>
       <Input
         label="Email"
         value={email || ""}
-        onChange={(e) => setData("personal.email", e.target.value)}
+        onChange={(e) =>
+          setData("personal.email", e.target.value, { debounceValidation: 400 })
+        }
         error={useWizardError("personal.email")}
       />
     </div>
@@ -118,14 +152,22 @@ const SecurityStep = () => {
         label="Password"
         type="password"
         value={password || ""}
-        onChange={(e) => setData("security.password", e.target.value)}
+        onChange={(e) =>
+          setData("security.password", e.target.value, {
+            debounceValidation: 400,
+          })
+        }
         error={useWizardError("security.password")}
       />
       <Input
         label="Confirm Password"
         type="password"
         value={confirm || ""}
-        onChange={(e) => setData("security.confirmPassword", e.target.value)}
+        onChange={(e) =>
+          setData("security.confirmPassword", e.target.value, {
+            debounceValidation: 400,
+          })
+        }
         error={useWizardError("security.confirmPassword")}
       />
     </div>
@@ -207,7 +249,7 @@ const StepWrapper = ({ children }: { children: React.ReactNode }) => (
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2 }}
-      className="min-h-75"
+      className="min-h-80"
     >
       {children}
     </motion.div>
@@ -231,9 +273,15 @@ const AdvancedWizardInner = () => {
   );
 };
 
+const initialData: DemoData = {
+  personal: { firstName: "", lastName: "", email: "" },
+  security: { password: "", confirmPassword: "" },
+  preferences: { theme: "light", newsletter: false },
+};
+
 export default function AdvancedDemo() {
   return (
-    <WizardProvider config={configWithComponents}>
+    <WizardProvider config={configWithComponents} initialData={initialData}>
       <AdvancedWizardInner />
     </WizardProvider>
   );

@@ -160,8 +160,8 @@ export interface IWizardContext<T = unknown> {
     /**
      * Validation & Persistence
      */
-    validateStep: (stepId: string) => Promise<boolean>;
-    validateAll: () => Promise<boolean>;
+    validateStep: (sid: string) => Promise<boolean>;
+    validateAll: () => Promise<{ isValid: boolean; errors: Record<string, Record<string, string>> }>;
     save: () => void; // Manual persistence save
     clearStorage: () => void;
 }
