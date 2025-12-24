@@ -10,3 +10,4 @@ coverage
 __tests__/__snapshots__
 dist
 .npmrc
+.ai-rules.md
