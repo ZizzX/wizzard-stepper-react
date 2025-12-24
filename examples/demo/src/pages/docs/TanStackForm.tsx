@@ -28,14 +28,14 @@ export default function TanStackDocs() {
 
         <div className="bg-gray-950 rounded-3xl p-8 font-mono text-[12px] shadow-2xl ring-1 ring-white/10">
           <div className="space-y-2 text-gray-400 border-l-2 border-yellow-500/30 pl-6">
-            <div><span className="text-purple-400">const</span> form <span className="text-emerald-400">=</span> <span className="text-blue-400">useForm</span>({"{"}</div>
-            <div className="pl-4">defaultValues: <span className="text-blue-400">useWizardValue</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">UserData</span><span className="text-emerald-400">&gt;</span>(<span className="text-emerald-400">'user'</span>),</div>
-            <div className="pl-4">onSubmit: async (values) <span className="text-purple-400">=&gt;</span> {"{"}</div>
-            <div className="pl-8 text-gray-500">// Atomic update to wizard store</div>
-            <div className="pl-8"><span className="text-indigo-400">setData</span>(<span className="text-emerald-400">'user'</span>, values);</div>
-            <div className="pl-8"><span className="text-indigo-400">goToNextStep</span>();</div>
-            <div className="pl-4">{"}"}</div>
-            <div>{"});"}</div>
+            <div><span className="text-purple-400">const</span> <span className="text-indigo-300">form</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">useForm</span><span className="text-emerald-400">(</span><span className="text-emerald-400">{"{"}</span></div>
+            <div className="pl-4"><span className="text-sky-300">defaultValues</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">useWizardValue</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">UserData</span><span className="text-emerald-400">&gt;</span><span className="text-emerald-400">(</span><span className="text-amber-300">'user'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-4"><span className="text-sky-300">onSubmit</span><span className="text-emerald-400">:</span> <span className="text-purple-400">async</span> <span className="text-emerald-400">(</span><span className="text-indigo-300">values</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
+            <div className="pl-8 text-gray-500 italic">// Atomic update to wizard store</div>
+            <div className="pl-8"><span className="text-indigo-300">setData</span><span className="text-emerald-400">(</span><span className="text-amber-300">'user'</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">values</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+            <div className="pl-8"><span className="text-indigo-300">goToNextStep</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+            <div className="pl-4"><span className="text-emerald-400">{"}"}</span></div>
+            <div><span className="text-emerald-400">{"});"}</span></div>
           </div>
         </div>
       </section>

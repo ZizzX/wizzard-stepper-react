@@ -32,20 +32,20 @@ export default function FormikDocs() {
           </div>
           <div className="p-8 font-mono text-[13px] leading-relaxed">
             <div className="space-y-1 text-gray-300">
-              <div><span className="text-purple-400">&lt;</span><span className="text-blue-400">Formik</span></div>
-              <div className="pl-4">initialValues={"{"}<span className="text-blue-400">useWizardValue</span>(<span className="text-emerald-400">'billing'</span>){"}"}</div>
-              <div className="pl-4">validationSchema={"{"}<span className="text-indigo-400">billingSchema</span>{"}"}</div>
-              <div className="pl-4">onSubmit={"{"}(values) <span className="text-purple-400">=&gt;</span> {"{"}</div>
-              <div className="pl-8"><span className="text-indigo-300">setData</span>(<span className="text-emerald-400">'billing'</span>, values);</div>
-              <div className="pl-8"><span className="text-indigo-300">goToNextStep</span>();</div>
-              <div className="pl-4">{"}}"}</div>
-              <div className="text-purple-400">&gt;</div>
-              <div className="pl-4">{"{({ handleSubmit }) => ("}</div>
-              <div className="pl-8 text-emerald-400">&lt;form <span className="text-indigo-400">onSubmit</span>={"{"}<span className="text-indigo-300">handleSubmit</span>{"}"}&gt;</div>
-              <div className="pl-12 text-gray-500">// Formik Fields here...</div>
-              <div className="pl-8 text-emerald-400">&lt;/form&gt;</div>
-              <div className="pl-4">{")}"}</div>
-              <div><span className="text-purple-400">&lt;/</span><span className="text-blue-400">Formik</span><span className="text-purple-400">&gt;</span></div>
+              <div><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">Formik</span></div>
+              <div className="pl-4"><span className="text-sky-300">initialValues</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-300">'billing'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">{"}"}</span></div>
+              <div className="pl-4"><span className="text-sky-300">validationSchema</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">billingSchema</span><span className="text-emerald-400">{"}"}</span></div>
+              <div className="pl-4"><span className="text-sky-300">onSubmit</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-emerald-400">(</span><span className="text-indigo-300">values</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-8"><span className="text-indigo-300">setData</span><span className="text-emerald-400">(</span><span className="text-amber-300">'billing'</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">values</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pl-8"><span className="text-indigo-300">goToNextStep</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pl-4"><span className="text-emerald-400">{"}}"}</span></div>
+              <div className="text-emerald-400">&gt;</div>
+              <div className="pl-4"><span className="text-emerald-400">{"{({ "}</span><span className="text-indigo-300">handleSubmit</span><span className="text-emerald-400">{" }) => ("}</span></div>
+              <div className="pl-8"><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">form</span> <span className="text-sky-300">onSubmit</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">handleSubmit</span><span className="text-emerald-400">{"}"}</span><span className="text-emerald-400">&gt;</span></div>
+              <div className="pl-12 text-gray-500 italic">// Formik Fields here...</div>
+              <div className="pl-8"><span className="text-emerald-400">&lt;/</span><span className="text-indigo-300">form</span><span className="text-emerald-400">&gt;</span></div>
+              <div className="pl-4"><span className="text-emerald-400">{")}"}</span></div>
+              <div><span className="text-emerald-400">&lt;/</span><span className="text-indigo-300">Formik</span><span className="text-emerald-400">&gt;</span></div>
             </div>
           </div>
         </div>

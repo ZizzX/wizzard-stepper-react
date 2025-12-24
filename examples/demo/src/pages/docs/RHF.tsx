@@ -37,23 +37,23 @@ export default function RHFDocs() {
           </div>
           <div className="p-8 font-mono text-[13px] leading-relaxed">
             <div className="space-y-1">
-              <div><span className="text-purple-400">function</span> <span className="text-blue-400">UserStep</span>() {"{"}</div>
-              <div className="pl-4 text-gray-500">// 1. Initialize RHF with Wizard data</div>
-              <div className="pl-4"><span className="text-purple-400">const</span> {"{ register, handleSubmit }"} <span className="text-emerald-400">=</span> <span className="text-blue-400">useForm</span>({"{"}</div>
-              <div className="pl-8">defaultValues: <span className="text-blue-400">useWizardValue</span>(<span className="text-emerald-400">'user'</span>)</div>
-              <div className="pl-4">{"});"}</div>
-              <div className="pt-2 pl-4"><span className="text-purple-400">const</span> {"{ setData }"} <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardActions</span>();</div>
-              <div className="pt-2 pl-4 text-gray-500">// 2. Committed to Global State on Nav</div>
-              <div className="pl-4"><span className="text-purple-400">const</span> <span className="text-blue-400">onSubmit</span> <span className="text-emerald-400">=</span> (data) <span className="text-purple-400">=&gt;</span> {"{"}</div>
-              <div className="pl-8"><span className="text-blue-400">setData</span>(<span className="text-emerald-400">'user'</span>, data);</div>
-              <div className="pl-8"><span className="text-blue-400">goToNextStep</span>();</div>
-              <div className="pl-4">{"};"}</div>
+              <div><span className="text-purple-400">function</span> <span className="text-indigo-300">UserStep</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span> <span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-4 text-gray-500 italic">// 1. Initialize RHF with Wizard data</div>
+              <div className="pl-4"><span className="text-purple-400">const</span> <span className="text-emerald-400">{"{"}</span> <span className="text-indigo-300">register</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">handleSubmit</span> <span className="text-emerald-400">{"}"}</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">useForm</span><span className="text-emerald-400">(</span><span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-8"><span className="text-sky-300">defaultValues</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-300">'user'</span><span className="text-emerald-400">)</span></div>
+              <div className="pl-4"><span className="text-emerald-400">{"});"}</span></div>
+              <div className="pt-2 pl-4"><span className="text-purple-400">const</span> <span className="text-emerald-400">{"{"}</span> <span className="text-indigo-300">setData</span> <span className="text-emerald-400">{"}"}</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">useWizardActions</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pt-2 pl-4 text-gray-500 italic">// 2. Committed to Global State on Nav</div>
+              <div className="pl-4"><span className="text-purple-400">const</span> <span className="text-indigo-300">onSubmit</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">(</span><span className="text-indigo-300">data</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-8"><span className="text-indigo-300">setData</span><span className="text-emerald-400">(</span><span className="text-amber-300">'user'</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pl-8"><span className="text-indigo-300">goToNextStep</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pl-4"><span className="text-emerald-400">{"};"}</span></div>
               <div className="pt-2 text-purple-400">{"  return ("}</div>
-              <div className="pl-8 text-emerald-400">&lt;form <span className="text-indigo-400">onSubmit</span>={"{"}<span className="text-blue-400">handleSubmit</span>(onSubmit){"}"}&gt;</div>
-              <div className="pl-12 text-gray-300">...</div>
-              <div className="pl-8 text-emerald-400">&lt;/form&gt;</div>
+              <div className="pl-8"><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">form</span> <span className="text-sky-300">onSubmit</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">handleSubmit</span><span className="text-emerald-400">(</span><span className="text-indigo-300">onSubmit</span><span className="text-emerald-400">)</span><span className="text-emerald-400">{"}"}</span><span className="text-emerald-400">&gt;</span></div>
+              <div className="pl-12 text-gray-500 italic">...</div>
+              <div className="pl-8"><span className="text-emerald-400">&lt;/</span><span className="text-indigo-300">form</span><span className="text-emerald-400">&gt;</span></div>
               <div className="text-purple-400">{"  );"}</div>
-              <div>{"}"}</div>
+              <div><span className="text-emerald-400">{"}"}</span></div>
             </div>
           </div>
         </div>
@@ -82,10 +82,10 @@ export default function RHFDocs() {
           <div className="space-y-4">
             <h4 className="font-bold text-indigo-600">Global Sync</h4>
             <div className="bg-indigo-900 rounded-xl p-4 font-mono text-[10px] text-indigo-100 shadow-lg">
-              <span className="text-indigo-300">// Sync RHF errors to Wizard</span><br/>
-              <span className="text-purple-400">useEffect</span>(() <span className="text-purple-400">=&gt;</span> {"{"}<br/>
-              &nbsp;&nbsp;<span className="text-blue-400">setErrorState</span>(stepId, rhfErrors);<br/>
-              {"}"}, [rhfErrors]);
+              <span className="text-gray-400 italic">// Sync RHF errors to Wizard</span><br/>
+              <span className="text-purple-400">useEffect</span><span className="text-emerald-400">(</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span><br/>
+              &nbsp;&nbsp;<span className="text-indigo-300">setErrorState</span><span className="text-emerald-400">(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">rhfErrors</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span><br/>
+              <span className="text-emerald-400">{"}"}</span><span className="text-emerald-400">,</span> <span className="text-emerald-400">[</span><span className="text-indigo-300">rhfErrors</span><span className="text-emerald-400">]</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span>
             </div>
             <p className="text-xs text-gray-500">
               Allows the Sidebar to show 🔴 red dots if a previously visited step 

@@ -28,15 +28,15 @@ export default function SecurityDocs() {
 
         <div className="bg-gray-950 rounded-3xl p-8 font-mono text-[13px] shadow-2xl ring-1 ring-white/10">
           <div className="space-y-2 text-gray-400">
-            <div><span className="text-gray-500">// Proposed "Expert" Pattern: Sequential Guard</span></div>
-            <div><span className="text-purple-400">const</span> <span className="text-indigo-300">onStepChange</span> <span className="text-emerald-400">=</span> (from: <span className="text-amber-400">string</span>, to: <span className="text-amber-400">string</span>) <span className="text-purple-400">=&gt;</span> {"{"}</div>
-            <div className="pl-4"><span className="text-purple-400">const</span> isMovingForward <span className="text-emerald-400">=</span> isAfter(to, from);</div>
-            <div className="pl-4"><span className="text-purple-400">const</span> isTargetCompleted <span className="text-emerald-400">=</span> completedSteps.has(to);</div>
-            <div className="pt-2 pl-4 text-gray-500">// Block forward navigation to unvisited/incomplete steps</div>
-            <div className="pl-4"><span className="text-purple-400">if</span> (isMovingForward <span className="text-purple-400">&&</span> <span className="text-purple-400">!</span>isTargetCompleted) {"{"}</div>
-            <div className="pl-8"><span className="text-purple-400">throw new</span> <span className="text-blue-400">Error</span>(<span className="text-amber-400">"Must complete current step first."</span>);</div>
-            <div className="pl-4">{"}"}</div>
-            <div>{"}"}</div>
+            <div><span className="text-gray-400 italic">// Proposed "Expert" Pattern: Sequential Guard</span></div>
+            <div><span className="text-purple-400">const</span> <span className="text-indigo-300">onStepChange</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">(</span><span className="text-indigo-300">from</span><span className="text-emerald-400">:</span> <span className="text-amber-400">string</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">:</span> <span className="text-amber-400">string</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
+            <div className="pl-4"><span className="text-purple-400">const</span> <span className="text-indigo-300">isMovingForward</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">isAfter</span><span className="text-emerald-400">(</span><span className="text-indigo-300">to</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">from</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+            <div className="pl-4"><span className="text-purple-400">const</span> <span className="text-indigo-300">isTargetCompleted</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">completedSteps</span><span className="text-emerald-400">.</span><span className="text-indigo-300">has</span><span className="text-emerald-400">(</span><span className="text-indigo-300">to</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+            <div className="pt-2 pl-4 text-gray-500 italic">// Block forward navigation to unvisited/incomplete steps</div>
+            <div className="pl-4"><span className="text-purple-400">if</span> <span className="text-emerald-400">(</span><span className="text-indigo-300">isMovingForward</span> <span className="text-purple-400">&&</span> <span className="text-purple-400">!</span><span className="text-indigo-300">isTargetCompleted</span><span className="text-emerald-400">)</span> <span className="text-emerald-400">{"{"}</span></div>
+            <div className="pl-8"><span className="text-purple-400">throw new</span> <span className="text-indigo-300">Error</span><span className="text-emerald-400">(</span><span className="text-amber-300">"Must complete current step first."</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+            <div className="pl-4"><span className="text-emerald-400">{"}"}</span></div>
+            <div><span className="text-emerald-400">{"}"}</span></div>
           </div>
         </div>
         
@@ -84,12 +84,12 @@ export default function SecurityDocs() {
           <div className="space-y-4">
             <h4 className="font-bold text-emerald-700">Expert: EncryptedLocalStorage</h4>
             <div className="bg-gray-900 rounded-xl p-4 font-mono text-[10px] text-emerald-100 shadow-xl ring-1 ring-white/10">
-              <span className="text-purple-400">class</span> <span className="text-blue-400">SecureAdapter</span> {"{"}<br/>
-              &nbsp;&nbsp;<span className="text-blue-400">saveStep</span>(id, data) {"{"}<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400">const</span> encrypted <span className="text-emerald-400">=</span> <span className="text-indigo-400">AES.encrypt</span>(data, key);<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;localStorage.<span className="text-indigo-400">setItem</span>(id, encrypted);<br/>
-              &nbsp;&nbsp;{"}"}<br/>
-              {"}"}
+              <span className="text-purple-400">class</span> <span className="text-indigo-300">SecureAdapter</span> <span className="text-emerald-400">{"{"}</span><br/>
+              &nbsp;&nbsp;<span className="text-indigo-300">saveStep</span><span className="text-emerald-400">(</span><span className="text-indigo-300">id</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">)</span> <span className="text-emerald-400">{"{"}</span><br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-purple-400">const</span> <span className="text-indigo-300">encrypted</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">AES</span><span className="text-emerald-400">.</span><span className="text-indigo-300">encrypt</span><span className="text-emerald-400">(</span><span className="text-indigo-300">data</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">key</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span><br/>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-indigo-300">localStorage</span><span className="text-emerald-400">.</span><span className="text-indigo-300">setItem</span><span className="text-emerald-400">(</span><span className="text-indigo-300">id</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">encrypted</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span><br/>
+              &nbsp;&nbsp;<span className="text-emerald-400">{"}"}</span><br/>
+              <span className="text-emerald-400">{"}"}</span>
             </div>
           </div>
         </div>

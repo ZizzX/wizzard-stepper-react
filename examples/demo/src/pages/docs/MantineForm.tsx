@@ -32,21 +32,21 @@ export default function MantineDocs() {
           </div>
           <div className="p-8 font-mono text-[13px] leading-relaxed">
             <div className="space-y-1 text-gray-300">
-              <div><span className="text-purple-400">const</span> form <span className="text-emerald-400">=</span> <span className="text-blue-400">useForm</span>({"{"}</div>
-              <div className="pl-4">initialValues: <span className="text-blue-400">useWizardValue</span>(<span className="text-emerald-400">'settings'</span>),</div>
-              <div className="pl-4">validate: {"{"}</div>
-              <div className="pl-8 text-gray-500">// Mantine validation logic</div>
-              <div className="pl-8">email: (value) <span className="text-purple-400">=&gt;</span> (/^\S+@\S+$/.test(value) ? <span className="text-blue-400">null</span> : <span className="text-rose-400">'Invalid email'</span>),</div>
-              <div className="pl-4">{"}"}</div>
-              <div>{"});"}</div>
-              <div className="pt-4"><span className="text-purple-400">return</span> (</div>
-              <div className="pl-4 text-emerald-400">&lt;form <span className="text-indigo-400">onSubmit</span>={"{"}<span className="text-indigo-300">form.onSubmit</span>((v) <span className="text-purple-400">=&gt;</span> {"{"}</div>
-              <div className="pl-8 text-indigo-300">updateWizardData(v);</div>
-              <div className="pl-8 text-indigo-300">goToNextStep();</div>
-              <div className="pl-4 text-emerald-400">{" })}"}&gt;</div>
-              <div className="pl-8 text-emerald-400">&lt;TextInput <span className="text-indigo-400">{"{...form.getInputProps('email')}"}</span> /&gt;</div>
-              <div className="pl-4 text-emerald-400">&lt;/form&gt;</div>
-              <div>);</div>
+              <div><span className="text-purple-400">const</span> <span className="text-indigo-300">form</span> <span className="text-emerald-400">=</span> <span className="text-indigo-300">useForm</span><span className="text-emerald-400">(</span><span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-4"><span className="text-sky-300">initialValues</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-300">'settings'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">,</span></div>
+              <div className="pl-4"><span className="text-sky-300">validate</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-8 text-gray-500 italic">// Mantine validation logic</div>
+              <div className="pl-8"><span className="text-sky-300">email</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">(</span><span className="text-indigo-300">value</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">(</span><span className="text-emerald-400">/</span><span className="text-amber-300">^\S+@\S+$</span><span className="text-emerald-400">/</span><span className="text-emerald-400">.</span><span className="text-indigo-300">test</span><span className="text-emerald-400">(</span><span className="text-indigo-300">value</span><span className="text-emerald-400">)</span> ? <span className="text-indigo-300">null</span> <span className="text-emerald-400">:</span> <span className="text-amber-300">'Invalid email'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">,</span></div>
+              <div className="pl-4"><span className="text-emerald-400">{"}"}</span></div>
+              <div><span className="text-emerald-400">{"});"}</span></div>
+              <div className="pt-4"><span className="text-purple-400">return</span> <span className="text-emerald-400">(</span></div>
+              <div className="pl-4"><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">form</span> <span className="text-sky-300">onSubmit</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">form</span><span className="text-emerald-400">.</span><span className="text-indigo-300">onSubmit</span><span className="text-emerald-400">(</span><span className="text-emerald-400">(</span><span className="text-indigo-300">v</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-8"><span className="text-indigo-300">updateWizardData</span><span className="text-emerald-400">(</span><span className="text-indigo-300">v</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pl-8"><span className="text-indigo-300">goToNextStep</span><span className="text-emerald-400">(</span><span className="text-emerald-400">)</span><span className="text-emerald-400">;</span></div>
+              <div className="pl-4"><span className="text-emerald-400">{" })}"}&gt;</span></div>
+              <div className="pl-8"><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">TextInput</span> <span className="text-sky-300">{"{..."}</span><span className="text-indigo-300">form</span><span className="text-emerald-400">.</span><span className="text-indigo-300">getInputProps</span><span className="text-emerald-400">(</span><span className="text-amber-300">'email'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">{"}"}</span> <span className="text-emerald-400">/&gt;</span></div>
+              <div className="pl-4"><span className="text-emerald-400">&lt;/</span><span className="text-indigo-300">form</span><span className="text-emerald-400">&gt;</span></div>
+              <div><span className="text-emerald-400">);</span></div>
             </div>
           </div>
         </div>
