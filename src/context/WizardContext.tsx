@@ -314,7 +314,13 @@ export function WizardProvider<T extends Record<string, any>>({
         if (validationTimeoutRef.current)
           clearTimeout(validationTimeoutRef.current);
         validationTimeoutRef.current = setTimeout(() => {
-          validateStep(currentStepId, newData);
+          try {
+            validateStep(currentStepId, newData).catch((err) => {
+              console.error("[Wizard] Debounced validation failed:", err);
+            });
+          } catch (e) {
+            console.error("[Wizard] Error starting validation:", e);
+          }
         }, options.debounceValidation);
       } else {
         validateStep(currentStepId, newData);

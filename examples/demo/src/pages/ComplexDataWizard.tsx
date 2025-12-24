@@ -80,22 +80,19 @@ const ChildRow = React.memo(
           <Input
             label={`Child #${index + 1} Name`}
             value={name || ""}
-            onChange={(e) =>
-              setData(`children.${index}.name`, e.target.value, {
-                debounceValidation: 300,
-              })
-            }
+            onChange={(e) => {
+              // Fix: ensure sync update to prevent potential timeout/closure issues in prod
+              setData(`children.${index}.name`, e.target.value);
+            }}
             error={nameError}
           />
           <Input
             label="Age"
             type="number"
             value={age || 0}
-            onChange={(e) =>
-              setData(`children.${index}.age`, Number(e.target.value), {
-                debounceValidation: 300,
-              })
-            }
+            onChange={(e) => {
+              setData(`children.${index}.age`, Number(e.target.value));
+            }}
             error={ageError}
           />
         </div>

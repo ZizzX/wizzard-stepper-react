@@ -350,6 +350,20 @@ Check out the [Live Demo](https://ZizzX.github.io/wizzard-stepper-react/), [NPM]
 - **React Hook Form + Zod** integration.
 - **Formik + Yup** integration.
 - **Conditional Routing** logic.
+- **Advanced Features Demo**: (`/advanced`) showcasing:
+  - **Autofill**: `updateData` global merge.
+  - **Declarative Rendering**: `<WizardStepRenderer />`.
+  - **Granular Persistence**: Hybrid Memory/LocalStorage.
+
+## Advanced Demo Guide 🧪
+
+Visit `/advanced` in the demo to try:
+
+1.  **Autofill**: Click "Magic Autofill" to test `updateData()`. It instantly populates the form (merged with existing data).
+2.  **Hybrid Persistence**:
+    *   **Step 1 (Identity)**: Refreshes persist (LocalStorage).
+    *   **Step 2 (Security)**: Refreshes CLEAR data (MemoryAdapter).
+3.  **Declarative UI**: The steps are rendered using `<WizardStepRenderer />` with Framer Motion animations, defined in the config!
 
 ## License
 
