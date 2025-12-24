@@ -15,6 +15,7 @@
     "@hookform/resolvers": "^5.2.2",
     "clsx": "^2.1.1",
     "formik": "^2.4.9",
+    "framer-motion": "^12.23.26",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.69.0",
