@@ -21,6 +21,37 @@ var MemoryAdapter = class {
   }
 };
 
+// src/utils/data.ts
+function getByPath(obj, path, defaultValue) {
+  if (!path) return obj;
+  const keys = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
+  let result = obj;
+  for (const key of keys) {
+    if (result === void 0 || result === null) return defaultValue;
+    result = result[key];
+  }
+  return result !== void 0 ? result : defaultValue;
+}
+function setByPath(obj, path, value) {
+  if (!path) return value;
+  const keys = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
+  const update = (current, index) => {
+    if (index === keys.length) return value;
+    const key = keys[index];
+    const isKeyNumeric = !isNaN(Number(key)) && key.trim() !== "";
+    let nextLevel = current;
+    if (!nextLevel || typeof nextLevel !== "object") {
+      nextLevel = isKeyNumeric ? [] : {};
+    } else {
+      nextLevel = Array.isArray(nextLevel) ? [...nextLevel] : { ...nextLevel };
+    }
+    const nextKey = isKeyNumeric ? Number(key) : key;
+    nextLevel[nextKey] = update(nextLevel[nextKey], index + 1);
+    return nextLevel;
+  };
+  return update(obj, 0);
+}
+
 // src/context/WizardContext.tsx
 import { jsx } from "react/jsx-runtime";
 var WizardContext = createContext(void 0);
@@ -96,10 +127,22 @@ function WizardProvider({
       return newData;
     });
   }, [persistenceMode, saveData]);
+  const setData = useCallback((path, value2) => {
+    setWizardData((prev) => {
+      const newData = setByPath(prev, path, value2);
+      if (persistenceMode === "onChange") {
+        saveData("onChange", currentStepId, newData);
+      }
+      return newData;
+    });
+  }, [persistenceMode, saveData, currentStepId]);
+  const getData = useCallback((path, defaultValue) => {
+    return getByPath(wizardData, path, defaultValue);
+  }, [wizardData]);
   const handleStepChange = useCallback((field, value2) => {
     if (!currentStepId) return;
-    setStepData(currentStepId, { [field]: value2 });
-  }, [currentStepId, setStepData]);
+    setData(field, value2);
+  }, [setData, currentStepId]);
   const validateStep = useCallback(async (stepId) => {
     const step = config.steps.find((s) => s.id === stepId);
     if (!step) return true;
@@ -205,8 +248,10 @@ function WizardProvider({
     handleStepChange,
     validateStep,
     validateAll,
-    save: () => saveData("manual", currentStepId, wizardData),
-    clearStorage: () => persistenceAdapter.clear()
+    save: useCallback(() => saveData("manual", currentStepId, wizardData), [saveData, currentStepId, wizardData]),
+    clearStorage: useCallback(() => persistenceAdapter.clear(), [persistenceAdapter]),
+    setData,
+    getData
   };
   return /* @__PURE__ */ jsx(WizardContext.Provider, { value, children });
 }
@@ -311,6 +356,8 @@ export {
   WizardProvider,
   YupAdapter,
   ZodAdapter,
+  getByPath,
+  setByPath,
   useWizard,
   useWizardContext
 };

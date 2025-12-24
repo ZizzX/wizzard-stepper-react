@@ -118,6 +118,14 @@ interface IWizardContext<T = unknown> {
     setStepData: (stepId: string, data: any) => void;
     handleStepChange: (field: string, value: any) => void;
     /**
+     * Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[0].value')
+     */
+    setData: (path: string, value: any) => void;
+    /**
+     * Get data by path
+     */
+    getData: (path: string, defaultValue?: any) => any;
+    /**
      * Validation & Persistence
      */
     validateStep: (stepId: string) => Promise<boolean>;
@@ -164,4 +172,13 @@ declare class YupAdapter<T> implements IValidatorAdapter<T> {
     validate(data: T): Promise<ValidationResult>;
 }
 
-export { type IPersistenceAdapter, type IStepConfig, type IValidatorAdapter, type IWizardConfig, type IWizardContext, LocalStorageAdapter, MemoryAdapter, type PersistenceMode, type ValidationResult, WizardProvider, YupAdapter, ZodAdapter, useWizard, useWizardContext };
+/**
+ * Retrieves a value from an object by path (dot notation or brackets)
+ */
+declare function getByPath(obj: any, path: string, defaultValue?: any): any;
+/**
+ * Immutably sets a value in an object by path
+ */
+declare function setByPath<T extends object>(obj: T, path: string, value: any): T;
+
+export { type IPersistenceAdapter, type IStepConfig, type IValidatorAdapter, type IWizardConfig, type IWizardContext, LocalStorageAdapter, MemoryAdapter, type PersistenceMode, type ValidationResult, WizardProvider, YupAdapter, ZodAdapter, getByPath, setByPath, useWizard, useWizardContext };
