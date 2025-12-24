@@ -2,7 +2,11 @@ import { useWizard } from 'wizzard-stepper-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 
-export const StepperControls = () => {
+interface StepperControlsProps {
+  onComplete?: () => void | Promise<void>;
+}
+
+export const StepperControls = ({ onComplete }: StepperControlsProps) => {
   const {
     currentStepIndex,
     isFirstStep,
@@ -19,8 +23,12 @@ export const StepperControls = () => {
 
   const handleNext = async () => {
     if (isLastStep) {
-      clearStorage();
-      navigate('/');
+      if (onComplete) {
+        await onComplete();
+      } else {
+        clearStorage();
+        navigate('/examples');
+      }
     } else {
       await goToNextStep();
     }

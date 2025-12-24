@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { WizardProvider, useWizard } from "../../wizards/docs-wizard";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Card, CardContent } from "../../components/ui/Card";
 import { StepperControls } from "../../components/StepperControls";
 import { LocalStorageAdapter } from "wizzard-stepper-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const TutorialStep1 = () => {
   const { wizardData, handleStepChange } = useWizard();
@@ -74,28 +76,72 @@ const TutorialStep3 = () => {
 };
 
 const TutorialContent = () => {
-  const { currentStep, currentStepIndex } = useWizard();
+  const { currentStep, currentStepIndex, goToStep } = useWizard();
+  const [showSuccess, setShowSuccess] = useState(false);
+
   if (!currentStep) return null;
 
+  const handleComplete = async () => {
+    setShowSuccess(true);
+    // Wait for animation
+    setTimeout(async () => {
+      setShowSuccess(false);
+      await goToStep("step1");
+    }, 2500);
+  };
+
   return (
-    <div className="space-y-8">
-      <Card className="border-2 border-indigo-100 shadow-xl overflow-hidden bg-white">
-        <div className="h-1 bg-indigo-100 w-full overflow-hidden">
-           <div 
-             className="h-full bg-indigo-600 transition-all duration-500" 
-             style={{ width: `${(currentStepIndex + 1) * 33.33}%` }} 
-           />
-        </div>
-        <CardContent className="p-8">
-           {currentStep.id === "step1" && <TutorialStep1 />}
-           {currentStep.id === "step2" && <TutorialStep2 />}
-           {currentStep.id === "step3" && <TutorialStep3 />}
-           
-           <div className="mt-8 pt-6 border-t border-gray-100">
-              <StepperControls />
-           </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-8 relative">
+      <AnimatePresence mode="wait">
+        {showSuccess ? (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className="bg-indigo-600 rounded-3xl p-12 text-center text-white shadow-2xl flex flex-col items-center justify-center min-h-[400px]"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-4xl mb-6"
+            >
+              🎉
+            </motion.div>
+            <h3 className="text-3xl font-bold mb-2">Tutorial Complete!</h3>
+            <p className="text-indigo-100 text-lg max-w-sm">
+              You've mastered the basics of wizzard-stepper-react. Redirecting
+              you back to start...
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="wizard"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <Card className="border-2 border-indigo-100 shadow-xl overflow-hidden bg-white">
+              <div className="h-1 bg-indigo-100 w-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-600 transition-all duration-500"
+                  style={{ width: `${(currentStepIndex + 1) * 33.33}%` }}
+                />
+              </div>
+              <CardContent className="p-8">
+                {currentStep.id === "step1" && <TutorialStep1 />}
+                {currentStep.id === "step2" && <TutorialStep2 />}
+                {currentStep.id === "step3" && <TutorialStep3 />}
+
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <StepperControls onComplete={handleComplete} />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-4 shadow-sm">
         <h3 className="text-lg font-bold text-gray-900">Wait, how was this built?</h3>
