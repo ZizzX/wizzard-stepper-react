@@ -196,6 +196,7 @@ const wizardConfig: IWizardConfig<ComplexFormData> = {
     {
       id: "children",
       label: "Children",
+      // Optimize performance by delaying validation until "Next" is clicked
       validationMode: "onStepChange",
       validationAdapter: new ZodAdapter(complexSchema.pick({ children: true })),
     },

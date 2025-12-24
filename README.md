@@ -144,7 +144,8 @@ const autoFillParams = () => {
 
 ## Performance & Optimization 🚀
 
-For large forms (e.g., 50+ array items), using `useWizard` context can cause performance issues because it triggers a re-render on every keystroke. To solve this, we provide **granular hooks** that allow components to subscribe only to the specific data they need.
+**New in v2**: The library now uses **path caching** and **iterative updates** under the hood. `setData` is incredibly fast even for deeply nested objects.
+For large forms (e.g., 50+ array items), using `useWizard` context can still cause React re-renders. To solve this, we provide granular hooks:
 
 ### 1. Use `useWizardValue` for Granular Updates
 
@@ -195,6 +196,39 @@ For heavy validation schemas, you can debounce validation to keep the UI respons
 setData('field.path', value, { 
   debounceValidation: 300 // Wait 300ms before running Zod/Yup validation
 });
+```
+
+## Validation Logic 🛡️
+
+By default, validation runs on every change (`onChange`). You can optimize this for heavy forms.
+
+### Granular Validation Control
+
+Control when validation occurs using `validationMode`:
+
+- `'onChange'`: Validate on every keystroke (debounced). Best for small forms.
+- `'onStepChange'`: Validate **only** when clicking Next. Best for heavy/complex forms.
+- `'manual'`: Validate only when you call `validateStep()`.
+
+```typescript
+const config: IWizardConfig = {
+  // Global setting
+  validationMode: 'onChange', 
+  steps: [
+    { 
+      id: 'step1', 
+      label: 'Fast Step',
+      // Inherits global (onChange)
+    },
+    { 
+      id: 'step2', 
+      label: 'Heavy Data',
+      // Override: Optimize for performance
+      validationMode: 'onStepChange', 
+      validationAdapter: new ZodAdapter(largeSchema)
+    }
+  ]
+}
 ```
 
 ## Conditional Steps
