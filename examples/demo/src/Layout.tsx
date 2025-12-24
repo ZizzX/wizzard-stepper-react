@@ -7,12 +7,8 @@ export default function Layout() {
 
   const navItems = [
     { path: '/', label: 'Overview' },
-    { path: '/legacy', label: 'Legacy' },
-    { path: '/simple', label: 'Simple JS' },
-    { path: '/rhf-zod', label: 'RHF + Zod' },
-    { path: '/formik-yup', label: 'Formik + Yup' },
-    { path: '/conditional', label: 'Conditional' },
-    { path: '/complex', label: 'Complex Data' },
+    { path: '/docs/introduction', label: 'Documentation' },
+    { path: '/examples', label: 'Examples' },
   ];
 
   return (
@@ -32,7 +28,10 @@ export default function Layout() {
               
               <nav className="hidden md:flex items-center space-x-1">
                 {navItems.map((item) => {
-                  const isActive = location.pathname === item.path;
+                  const isActive = item.path === '/' 
+                    ? location.pathname === '/' 
+                    : location.pathname.includes(item.path.split('/')[2] || item.path.split('/')[1]);
+
                   return (
                     <Link
                       key={item.path}
@@ -40,7 +39,7 @@ export default function Layout() {
                       className={cn(
                         "px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
                         isActive 
-                          ? "bg-indigo-50 text-indigo-700" 
+                          ? "bg-indigo-50 text-indigo-700 font-semibold" 
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                       )}
                     >

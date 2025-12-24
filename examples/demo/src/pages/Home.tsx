@@ -1,68 +1,8 @@
-import { Link } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/Card";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 
 export default function Home() {
-  const features = [
-    {
-      title: "Simple JS Wizard",
-      description:
-        "The easiest way to get started with no external form libraries.",
-      path: "/simple",
-      icon: "✨",
-      color: "bg-blue-50 text-blue-600",
-    },
-    {
-      title: "Legacy Wizard",
-      description:
-        "The easiest way to get started with no external form libraries.",
-      path: "/legacy",
-      icon: "✨",
-      color: "bg-blue-50 text-blue-600",
-    },
-    {
-      title: "RHF + Zod",
-      description:
-        "Full-featured forms with React Hook Form and Zod validation.",
-      path: "/rhf-zod",
-      icon: "🛡️",
-      color: "bg-indigo-50 text-indigo-600",
-    },
-    {
-      title: "Formik + Yup",
-      description: "Classic enterprise-grade forms with Formik and Yup.",
-      path: "/formik-yup",
-      icon: "📦",
-      color: "bg-purple-50 text-purple-600",
-    },
-    {
-      title: "Conditional Flow",
-      description: "Complex multi-step logic based on user interaction.",
-      path: "/conditional",
-      icon: "🔀",
-      color: "bg-emerald-50 text-emerald-600",
-    },
-    {
-      title: "Complex Data",
-      description: "Manage nested objects and arrays with deep path updates.",
-      path: "/complex",
-      icon: "📊",
-      color: "bg-amber-50 text-amber-600",
-    },
-    {
-      title: "Advanced Features",
-      description:
-        "Autofill, Declarative Rendering, and Mixed Persistence (RAM + LocalStorage).",
-      path: "/advanced",
-      icon: "🚀",
-      color: "bg-rose-50 text-rose-600",
-    },
-  ];
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-16 py-10">
@@ -78,51 +18,36 @@ export default function Home() {
         <div className="flex items-center justify-center gap-4 pt-4">
           <Button
             size="lg"
-            onClick={() =>
-              window.open(
-                "https://github.com/ZizzX/wizzard-stepper-react",
-                "_blank"
-              )
-            }
+            onClick={() => navigate("/docs/introduction")}
           >
             Get Started
           </Button>
           <Button
             variant="outline"
             size="lg"
-            onClick={() => window.scrollTo({ top: 600, behavior: "smooth" })}
+            onClick={() => navigate("/examples")}
           >
             View Examples
           </Button>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-        {features.map((feature) => (
-          <Link
-            key={feature.path}
-            to={feature.path}
-            className="group transition-transform hover:-translate-y-1"
-          >
-            <Card className="h-full border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${feature.color}`}
-                >
-                  {feature.icon}
-                </div>
-                <div>
-                  <CardTitle className="group-hover:text-indigo-600 transition-colors">
-                    {feature.title}
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{feature.description}</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+         <div className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 text-2xl">⚡</div>
+            <h3 className="text-xl font-bold">Fast & Small</h3>
+            <p className="text-gray-600">Zero dependencies at core, less than 5kB gzipped. Perfect for any size of project.</p>
+         </div>
+         <div className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 text-2xl">🛡️</div>
+            <h3 className="text-xl font-bold">Type Safe</h3>
+            <p className="text-gray-600">Built with TypeScript. Get full autocomplete for your data and step IDs.</p>
+         </div>
+         <div className="p-8 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-600 text-2xl">🧩</div>
+            <h3 className="text-xl font-bold">Headless</h3>
+            <p className="text-gray-600">Use any UI library. We manage the state, you manage the look and feel.</p>
+         </div>
       </div>
 
       <section className="bg-indigo-900 rounded-3xl p-12 text-center text-white space-y-6">
