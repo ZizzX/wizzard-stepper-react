@@ -38,7 +38,7 @@ function App() {
           <Route index element={<Introduction />} />
           <Route path="introduction" element={<Introduction />} />
           <Route path="installation" element={<Installation />} />
-          <Route path="quick-start" element={<QuickStart />} />
+          <Route path="quickstart" element={<QuickStart />} />
           
           <Route path="concepts" element={<CoreConcepts />} />
           <Route path="hooks" element={<HooksApi />} />

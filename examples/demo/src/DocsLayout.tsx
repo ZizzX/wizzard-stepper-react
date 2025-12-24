@@ -7,7 +7,7 @@ const sidebarItems = [
     items: [
       { id: "introduction", label: "Introduction", path: "/docs/introduction" },
       { id: "installation", label: "Installation", path: "/docs/installation" },
-      { id: "quick-start", label: "Quick Start", path: "/docs/quick-start" },
+      { id: "quickstart", label: "Quick Start", path: "/docs/quickstart" },
     ],
   },
   {

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import DocsNavigation from "../../components/DocsNavigation";
 
 export default function CoreConcepts() {
   return (
@@ -412,19 +412,11 @@ export default function CoreConcepts() {
         </div>
       </section>
 
-      {/* Next Link */}
-      <div className="pt-10 border-t border-gray-200 flex justify-end">
-        <motion.button
-          whileHover={{ x: 5 }}
-          className="flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-700 transition-colors"
-          onClick={() => (window.location.href = "#/docs/hooks")}
-        >
-          Explore Hooks API
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="9 5l7 7-7 7" />
-          </svg>
-        </motion.button>
-      </div>
+      {/* Navigation */}
+      <DocsNavigation 
+        prev={{ label: "Quick Start", href: "/docs/quickstart" }}
+        next={{ label: "Hooks API", href: "/docs/hooks" }} 
+      />
     </div>
   );
 }

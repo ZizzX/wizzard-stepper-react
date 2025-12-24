@@ -1,4 +1,4 @@
-// No motion needed here yet
+import DocsNavigation from "../../components/DocsNavigation";
 export default function HooksApi() {
   const hooks = [
     {
@@ -136,6 +136,10 @@ if (!success) {
           </div>
         </div>
       </section>
+      
+      <DocsNavigation 
+        prev={{ label: "Core Concepts", href: "/docs/concepts" }}
+      />
     </div>
   );
 }

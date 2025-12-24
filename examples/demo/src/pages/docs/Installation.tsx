@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
+import DocsNavigation from '../../components/DocsNavigation';
 
 export default function Installation() {
   const [activeManager, setActiveManager] = useState(0);
@@ -77,6 +78,10 @@ export default function Installation() {
           </ul>
         </div>
       </section>
+
+      <DocsNavigation 
+        next={{ label: "Quick Start", href: "/docs/quickstart" }} 
+      />
     </div>
   );
 }

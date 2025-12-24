@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DocsNavigation from "../../components/DocsNavigation";
 import { WizardProvider, useWizard } from "../../wizards/docs-wizard";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -225,6 +226,10 @@ export default function App() {
           </pre>
         </div>
       </section>
+      <DocsNavigation 
+        prev={{ label: "Installation", href: "/docs/installation" }}
+        next={{ label: "Core Concepts", href: "/docs/concepts" }} 
+      />
     </div>
   );
 }
