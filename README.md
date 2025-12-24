@@ -22,50 +22,60 @@ yarn add wizzard-stepper-react
 pnpm add wizzard-stepper-react
 ```
 
-## Quick Start (Native Forms)
+## Usage
+
+### 1. Basic Usage (Compatible & Simple)
+
+The quickest way to get started. Types are flexible (`any`).
 
 ```tsx
-import { WizardProvider, useWizard, IWizardConfig } from 'wizzard-stepper-react';
+import { WizardProvider, useWizard } from 'wizzard-stepper-react';
 
-// 1. Define Config
-const config: IWizardConfig = {
-  steps: [
-    { id: 'personal', label: 'Personal Info' },
-    { id: 'contact', label: 'Contact Details' },
-  ],
-};
-
-// 2. Create Steps
 const Step1 = () => {
-  const { handleStepChange, wizardData } = useWizard<{ name: string }>();
+  const { wizardData, handleStepChange } = useWizard();
   return (
     <input 
-      value={wizardData.name || ''} 
-      onChange={e => handleStepChange('name', e.target.value)} 
+      value={wizardData.name} 
+      onChange={(e) => handleStepChange('name', e.target.value)} 
     />
   );
 };
 
-// 3. Wrap in Provider
-export default function App() {
-  return (
-    <WizardProvider config={config}>
-       <WizardContent />
-    </WizardProvider>
-  );
+const App = () => (
+  <WizardProvider>
+    <Step1 />
+  </WizardProvider>
+);
+```
+
+### 2. Strict Usage (Factory Pattern 🏭)
+
+For production apps, use the factory pattern to get perfect type inference.
+
+**`wizards/my-wizard.ts`**
+```typescript
+import { createWizardFactory } from 'wizzard-stepper-react';
+
+interface MySchema {
+  name: string;
+  age: number;
 }
 
-const WizardContent = () => {
-  const { currentStep, goToNextStep } = useWizard();
-  if(!currentStep) return null;
-  return (
-    <div>
-      {currentStep.id === 'personal' && <Step1 />}
-      <button onClick={goToNextStep}>Next</button>
-    </div>
-  )
+export const { WizardProvider, useWizard } = createWizardFactory<MySchema>();
+```
+
+**`components/MyForm.tsx`**
+```tsx
+import { useWizard } from '../wizards/my-wizard';
+
+const Step1 = () => {
+  const { wizardData } = useWizard();
+  // ✅ wizardData is strictly typed as MySchema
+  // ✅ Autocomplete works for wizardData.name
 }
 ```
+
+See [MIGRATION.md](./MIGRATION.md) for details on switching to strict mode.
 
 ## Integration with React Hook Form + Zod
 

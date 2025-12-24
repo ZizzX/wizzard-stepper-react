@@ -584,7 +584,7 @@ export function useWizardActions(): IWizardActions {
   return context;
 }
 
-export function useWizardContext<T = unknown>(): IWizardContext<T> & {
+export function useWizardContext<T = any>(): IWizardContext<T> & {
   store: WizardStore<T>;
 } {
   const state = useWizardState<T>();
