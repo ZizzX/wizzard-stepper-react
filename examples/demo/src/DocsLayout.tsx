@@ -15,6 +15,7 @@ const sidebarItems = [
     items: [
       { id: "concepts", label: "Overview & Factory", path: "/docs/concepts" },
       { id: "hooks", label: "Hooks API", path: "/docs/hooks" },
+      { id: "types", label: "Type Reference", path: "/docs/types" },
     ],
   },
   {

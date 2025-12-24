@@ -16,6 +16,7 @@ import Installation from "./pages/docs/Installation";
 import QuickStart from "./pages/docs/QuickStart";
 import CoreConcepts from "./pages/docs/CoreConcepts";
 import HooksApi from "./pages/docs/HooksApi";
+import TypeReference from "./pages/docs/TypeReference";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
           
           <Route path="concepts" element={<CoreConcepts />} />
           <Route path="hooks" element={<HooksApi />} />
+          <Route path="types" element={<TypeReference />} />
           <Route path="factory" element={<CoreConcepts />} />
           <Route path="steps" element={<CoreConcepts />} />
           

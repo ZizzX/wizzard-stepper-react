@@ -6,7 +6,7 @@ export default function HooksApi() {
       {/* 1. Header & Philosophy */}
       <section className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
-          Hooks & Types API
+          Hooks API
         </h1>
         <p className="text-xl text-gray-600 leading-relaxed max-w-4xl">
           Designed for maximum type safety and performance. Our API leverages 
@@ -173,7 +173,7 @@ export default function HooksApi() {
             <h3 className="font-bold text-gray-800 flex items-center gap-2">useWizardError</h3>
             <p className="text-sm text-gray-600">
               The easiest way to display validation feedback. Subscribes only 
-              to errors related to the provided path.
+              to errors related to the provided path. Returns <code className="text-indigo-600 italic">undefined</code> if the field is valid.
             </p>
             <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs shadow-lg ring-1 ring-white/10">
               <pre className="space-y-4">
@@ -182,145 +182,71 @@ export default function HooksApi() {
                   <span className="text-purple-400">const</span> <span className="text-indigo-300">emailError</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardError</span><span className="text-emerald-400">(</span><span className="text-amber-400">'user.email'</span><span className="text-emerald-400">);</span>
                 </div>
                 <div className="text-gray-500">// Returns: string | undefined</div>
+                <div className="pt-2 text-gray-400 text-[10px] uppercase font-bold tracking-tighter">Usage in JSX:</div>
+                <div className="text-emerald-400">
+                  {"{ "}<span className="text-indigo-300">emailError</span> <span className="text-purple-400">&&</span> <span className="text-emerald-400">&lt;</span><span className="text-amber-400">span</span> <span className="text-indigo-400">className</span><span className="text-emerald-400">=</span><span className="text-amber-400">"error"</span><span className="text-emerald-400">&gt;</span>{"{"}<span className="text-indigo-300">emailError</span>{"}"}<span className="text-emerald-400">&lt;/</span><span className="text-amber-400">span</span><span className="text-emerald-400">&gt;</span>{" }"}
+                </div>
               </pre>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. Core Type Reference */}
+      {/* 5. Performance & Selection Guide */}
       <section className="space-y-8 pt-10 border-t border-gray-100">
         <div className="space-y-2">
-          <h2 className="text-3xl font-bold text-gray-900">Type Reference</h2>
-          <p className="text-gray-500 uppercase tracking-widest text-[10px] font-bold">The Backbone of Safety</p>
+          <h2 className="text-3xl font-bold text-gray-900">Performance & Selection</h2>
+          <p className="text-gray-500 uppercase tracking-widest text-[10px] font-bold">Optimization Strategies for Large Apps</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-12">
-          {/* IStepConfig */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              IStepConfig&lt;TStepData, TGlobalContext&gt;
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">A</span>
+              Hook Selection Guide
             </h3>
-            <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl">
-              <pre className="space-y-2 text-gray-400">
-                <div><span className="text-purple-400">interface</span> <span className="text-amber-400">IStepConfig</span> <span className="text-emerald-400">{"{"}</span></div>
-                <div className="pl-4"><span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">;</span> <span className="text-gray-500">// Unique identifier</span></div>
-                <div className="pl-4"><span className="text-indigo-400">label</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">;</span> <span className="text-gray-500">// Display name</span></div>
-                <div className="pl-4"><span className="text-indigo-400">condition</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">(</span>ctx<span className="text-emerald-400">:</span> <span className="text-indigo-300">TGlobalContext</span><span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">boolean</span><span className="text-emerald-400">;</span></div>
-                <div className="pl-4"><span className="text-indigo-400">validationAdapter</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-amber-400">IValidatorAdapter</span><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">TStepData</span><span className="text-emerald-400">&gt;;</span></div>
-                <div className="pl-4"><span className="text-indigo-400">autoValidate</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-rose-400">boolean</span><span className="text-emerald-400">;</span></div>
-                <div className="pl-4"><span className="text-indigo-400">component</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> React.<span className="text-amber-400">ComponentType</span><span className="text-emerald-400">&lt;</span><span className="text-rose-400">any</span><span className="text-emerald-400">&gt;;</span></div>
-                <div className="text-emerald-400">{"}"}</div>
-              </pre>
-            </div>
-          </div>
-
-          {/* IWizardConfig */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              IWizardConfig&lt;TSchema&gt;
-            </h3>
-            <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl">
-              <pre className="space-y-2 text-gray-400">
-                <div><span className="text-purple-400">interface</span> <span className="text-amber-400">IWizardConfig</span> <span className="text-emerald-400">{"{"}</span></div>
-                <div className="pl-4"><span className="text-indigo-400">steps</span><span className="text-emerald-400">:</span> <span className="text-amber-400">IStepConfig</span><span className="text-emerald-400">[];</span></div>
-                <div className="pl-4"><span className="text-indigo-400">autoValidate</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-rose-400">boolean</span><span className="text-emerald-400">;</span></div>
-                <div className="pl-4"><span className="text-indigo-400">persistence</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{"}</span></div>
-                <div className="pl-8"><span className="text-indigo-400">mode</span><span className="text-emerald-400">:</span> <span className="text-amber-400">PersistenceMode</span><span className="text-emerald-400">;</span></div>
-                <div className="pl-8"><span className="text-indigo-400">adapter</span><span className="text-emerald-400">:</span> <span className="text-amber-400">IPersistenceAdapter</span><span className="text-emerald-400">;</span></div>
-                <div className="pl-4 text-emerald-400">{" }"}</div>
-                <div className="pl-4"><span className="text-indigo-400">onStepChange</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">(</span>from<span className="text-emerald-400">,</span> to<span className="text-emerald-400">,</span> data<span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span></div>
-                <div className="text-emerald-400">{"}"}</div>
-              </pre>
-            </div>
-          </div>
-
-          {/* IValidatorAdapter & ValidationResult */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                IValidatorAdapter&lt;TData&gt;
-              </h3>
-              <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
-                <pre className="space-y-2 text-gray-400">
-                  <div><span className="text-purple-400">interface</span> <span className="text-amber-400">IValidatorAdapter</span> <span className="text-emerald-400">{"{"}</span></div>
-                  <div className="pl-4">
-                    <span className="text-indigo-400">validate</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">(</span><span className="text-indigo-300">data</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">TData</span><span className="text-emerald-400">) =&gt;</span> 
-                  </div>
-                  <div className="pl-4 text-amber-400">
-                    ValidationResult <span className="text-emerald-400">|</span> <span className="text-purple-400">Promise</span><span className="text-emerald-400">&lt;</span>ValidationResult<span className="text-emerald-400">&gt;;</span>
-                  </div>
-                  <div className="text-emerald-400">{"}"}</div>
-                </pre>
+            <div className="space-y-3">
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="text-xs font-bold text-indigo-600 mb-1">useWizardValue / Selector</div>
+                <p className="text-xs text-gray-600">
+                  <strong>Best for:</strong> Input fields, status indicators, and labels. 
+                  Prevents re-rendering the whole form when typing.
+                </p>
               </div>
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                ValidationResult
-              </h3>
-              <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
-                <pre className="space-y-2 text-gray-400">
-                  <div><span className="text-purple-400">type</span> <span className="text-rose-400">ValidationResult</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span></div>
-                  <div className="pl-4"><span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">boolean</span><span className="text-emerald-400">;</span></div>
-                  <div className="pl-4"><span className="text-indigo-400">errors</span><span className="text-emerald-400">?</span><span className="text-emerald-400">:</span> <span className="text-amber-400">Record</span><span className="text-emerald-400">&lt;</span><span className="text-rose-400">string</span><span className="text-emerald-400">,</span> <span className="text-rose-400">string</span><span className="text-emerald-400">&gt;;</span></div>
-                  <div className="text-emerald-400">{"}"}</div>
-                </pre>
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="text-xs font-bold text-indigo-600 mb-1">useWizardActions</div>
+                <p className="text-xs text-gray-600">
+                  <strong>Best for:</strong> "Next", "Back", and "Submit" buttons. 
+                  Zero re-renders because it only returns stable methods.
+                </p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="text-xs font-bold text-indigo-600 mb-1">useWizard</div>
+                <p className="text-xs text-gray-600">
+                  <strong>Best for:</strong> Step-level orchestration or small forms. 
+                  Subscribes to all state changes.
+                </p>
               </div>
             </div>
           </div>
 
-          {/* IPersistenceAdapter */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
-              IPersistenceAdapter
+          <div className="p-6 bg-indigo-600 rounded-3xl text-white space-y-4 shadow-xl shadow-indigo-200">
+            <h3 className="font-bold text-xl flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Pro Performance Tip
             </h3>
-            <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl">
-              <pre className="space-y-2 text-gray-400">
-                <div><span className="text-purple-400">interface</span> <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-emerald-400">{"{"}</span></div>
-                <div className="pl-4">
-                  <span className="text-indigo-400">saveStep</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">&lt;</span><span className="text-indigo-300">T</span><span className="text-emerald-400">&gt;(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">T</span><span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span>
-                </div>
-                <div className="pl-4">
-                  <span className="text-indigo-400">getStep</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">&lt;</span><span className="text-indigo-300">T</span><span className="text-emerald-400">&gt;(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">) =&gt;</span> <span className="text-indigo-300">T</span> <span className="text-emerald-400">|</span> <span className="text-rose-400">undefined</span><span className="text-emerald-400">;</span>
-                </div>
-                <div className="pl-4"><span className="text-indigo-400">clear</span><span className="text-emerald-400">: () =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span></div>
-                <div className="text-emerald-400">{"}"}</div>
-              </pre>
-            </div>
-          </div>
-
-          {/* PersistenceMode */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-              PersistenceMode
-            </h3>
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-500">
-                  <tr>
-                    <th className="px-6 py-4">Value</th>
-                    <th className="px-6 py-4">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {[
-                    { v: "onStepChange", d: "Saves only when navigating between steps." },
-                    { v: "onChange", d: "Debounced save on every data modification." },
-                    { v: "manual", d: "Save only when explicit save() action is called." }
-                  ].map(row => (
-                    <tr key={row.v}>
-                      <td className="px-6 py-4 font-mono text-indigo-600 font-bold">{row.v}</td>
-                      <td className="px-6 py-4 text-gray-600">{row.d}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <p className="text-indigo-100 text-sm leading-relaxed">
+              If you have a form with 50+ fields, avoid using <code className="text-white bg-indigo-500 px-1 rounded">useWizard()</code> at the root of the step. 
+              Instead, wrap individual inputs in small components that each use <code className="text-white bg-indigo-500 px-1 rounded">useWizardValue()</code>. 
+              This isolates updates and keeps your UI buttery smooth.
+            </p>
+            <div className="pt-2">
+              <div className="bg-indigo-700/50 rounded-xl p-4 font-mono text-[10px]">
+                <span className="text-indigo-200">// Good: Component re-renders only for 'name'</span><br/>
+                <span className="text-purple-300">const</span> <span className="text-indigo-300">name</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-400">'user.name'</span><span className="text-emerald-400">);</span>
+              </div>
             </div>
           </div>
         </div>
@@ -329,6 +255,7 @@ export default function HooksApi() {
       {/* Navigation */}
       <DocsNavigation 
         prev={{ label: "Core Concepts", href: "/docs/concepts" }}
+        next={{ label: "Type Reference", href: "/docs/types" }}
       />
     </div>
   );
