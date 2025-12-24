@@ -24,6 +24,8 @@ const sidebarItems = [
       { id: "persistence", label: "Persistence", path: "/docs/persistence" },
       { id: "validation", label: "Validation", path: "/docs/validation" },
       { id: "conditional", label: "Conditional Flow", path: "/docs/conditional-logic" },
+      { id: "routing", label: "Routing & URL", path: "/docs/routing" },
+      { id: "rendering", label: "Step Rendering", path: "/docs/rendering" },
     ],
   },
   {

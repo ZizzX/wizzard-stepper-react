@@ -155,39 +155,10 @@ export default function TypeReference() {
         </div>
       </section>
 
-      {/* 5. Enumerations & Constants */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center text-white font-bold">5</div>
-          <h2 className="text-2xl font-bold text-gray-900">Enumerations</h2>
-        </div>
-        <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-100 text-[10px] font-black uppercase text-gray-500">
-              <tr>
-                <th className="px-6 py-4">PersistenceMode</th>
-                <th className="px-6 py-4">Trigger Policy</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {[
-                { v: "onStepChange", d: "Recommended. Saves only when the user moves forward or back." },
-                { v: "onChange", d: "Real-time. Saves on every field update (debounced)." },
-                { v: "manual", d: "Explicit. You decide when to trigger save via actions." }
-              ].map(row => (
-                <tr key={row.v}>
-                  <td className="px-6 py-4 font-mono text-indigo-600 font-bold">{row.v}</td>
-                  <td className="px-6 py-4 text-gray-600 leading-relaxed">{row.d}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
       {/* Navigation */}
       <DocsNavigation 
         prev={{ label: "Hooks API", href: "/docs/hooks" }}
+        next={{ label: "Persistence", href: "/docs/persistence" }}
       />
     </div>
   );

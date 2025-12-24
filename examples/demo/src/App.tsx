@@ -17,6 +17,11 @@ import QuickStart from "./pages/docs/QuickStart";
 import CoreConcepts from "./pages/docs/CoreConcepts";
 import HooksApi from "./pages/docs/HooksApi";
 import TypeReference from "./pages/docs/TypeReference";
+import Validation from "./pages/docs/Validation";
+import Persistence from "./pages/docs/Persistence";
+import ConditionalLogic from "./pages/docs/ConditionalLogic";
+import RoutingDocs from "./pages/docs/RoutingDocs";
+import StepRendering from "./pages/docs/StepRendering";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
@@ -25,35 +30,42 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="examples" element={<Examples />} />
-        
-        {/* Flat paths for examples (backward compatibility/legacy support) */}
-        <Route path="simple" element={<SimpleWizard />} />
-        <Route path="legacy" element={<LegacyWizard />} />
-        <Route path="rhf-zod" element={<RHFZodWizard />} />
-        <Route path="formik-yup" element={<FormikYupWizard />} />
-        <Route path="conditional" element={<ConditionalWizard />} />
-        <Route path="complex" element={<ComplexDataWizard />} />
-        <Route path="advanced" element={<AdvancedDemo />} />
+          <Route index element={<Home />} />
+          <Route path="examples" element={<Examples />} />
+          
+          {/* Flat paths for examples (backward compatibility/legacy support) */}
+          <Route path="simple" element={<SimpleWizard />} />
+          <Route path="legacy" element={<LegacyWizard />} />
+          <Route path="rhf-zod" element={<RHFZodWizard />} />
+          <Route path="formik-yup" element={<FormikYupWizard />} />
+          <Route path="conditional" element={<ConditionalWizard />} />
+          <Route path="complex" element={<ComplexDataWizard />} />
+          <Route path="advanced" element={<AdvancedDemo />} />
 
-        {/* Documentation Section */}
-        <Route path="docs" element={<DocsLayout />}>
-          <Route index element={<Introduction />} />
-          <Route path="introduction" element={<Introduction />} />
-          <Route path="installation" element={<Installation />} />
-          <Route path="quickstart" element={<QuickStart />} />
-          
-          <Route path="concepts" element={<CoreConcepts />} />
-          <Route path="hooks" element={<HooksApi />} />
-          <Route path="types" element={<TypeReference />} />
-          <Route path="factory" element={<CoreConcepts />} />
-          <Route path="steps" element={<CoreConcepts />} />
-          
-          {/* Placeholders for other docs */}
-          <Route path="*" element={<Introduction />} />
+          {/* Documentation Section */}
+          <Route path="docs" element={<DocsLayout />}>
+            <Route index element={<Introduction />} />
+            <Route path="introduction" element={<Introduction />} />
+            <Route path="installation" element={<Installation />} />
+            <Route path="quickstart" element={<QuickStart />} />
+            
+            <Route path="concepts" element={<CoreConcepts />} />
+            <Route path="hooks" element={<HooksApi />} />
+            <Route path="types" element={<TypeReference />} />
+            
+            <Route path="persistence" element={<Persistence />} />
+            <Route path="validation" element={<Validation />} />
+            <Route path="conditional-logic" element={<ConditionalLogic />} />
+            <Route path="routing" element={<RoutingDocs />} />
+            <Route path="rendering" element={<StepRendering />} />
+            
+            <Route path="factory" element={<CoreConcepts />} />
+            <Route path="steps" element={<CoreConcepts />} />
+            
+            {/* Placeholders for other docs */}
+            <Route path="*" element={<Introduction />} />
+          </Route>
         </Route>
-      </Route>
       </Routes>
     </>
   );

@@ -184,7 +184,7 @@ export default function HooksApi() {
                 <div className="text-gray-500">// Returns: string | undefined</div>
                 <div className="pt-2 text-gray-400 text-[10px] uppercase font-bold tracking-tighter">Usage in JSX:</div>
                 <div className="text-emerald-400">
-                  {"{ "}<span className="text-indigo-300">emailError</span> <span className="text-purple-400">&&</span> <span className="text-emerald-400">&lt;</span><span className="text-amber-400">span</span> <span className="text-indigo-400">className</span><span className="text-emerald-400">=</span><span className="text-amber-400">"error"</span><span className="text-emerald-400">&gt;</span>{"{"}<span className="text-indigo-300">emailError</span>{"}"}<span className="text-emerald-400">&lt;/</span><span className="text-amber-400">span</span><span className="text-emerald-400">&gt;</span>{" }"}
+                  {"{ "}<div className="text-indigo-300">emailError</div> <span className="text-purple-400">&&</span> <span className="text-emerald-400">&lt;</span><span className="text-amber-400">span</span> <span className="text-indigo-400">className</span><span className="text-emerald-400">=</span><span className="text-amber-400">"error"</span><span className="text-emerald-400">&gt;</span>{"{"}<span className="text-indigo-300">emailError</span>{"}"}<span className="text-emerald-400">&lt;/</span><span className="text-amber-400">span</span><span className="text-emerald-400">&gt;</span>{" }"}
                 </div>
               </pre>
             </div>
