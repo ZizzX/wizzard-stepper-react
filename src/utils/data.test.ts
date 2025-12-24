@@ -31,6 +31,13 @@ describe('Data Utils', () => {
             expect(obj.a).toBe(1);
         });
 
+        it('should set value with simple key (no dot or brackets)', () => {
+            const obj = { foo: 'bar' };
+            const next = setByPath(obj, 'foo', 'baz');
+            expect(next.foo).toBe('baz');
+            expect(obj.foo).toBe('bar');
+        });
+
         it('should set nested value immutably', () => {
             const obj = { user: { name: 'John' } };
             const next = setByPath(obj, 'user.name', 'Jane');
@@ -58,5 +65,6 @@ describe('Data Utils', () => {
             expect(Array.isArray(next.items)).toBe(true);
             expect(next.items[0].id).toBe(1);
         });
+        
     });
 });

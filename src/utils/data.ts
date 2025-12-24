@@ -17,6 +17,10 @@ export function getByPath(obj: any, path: string, defaultValue?: any): any {
  */
 export function setByPath<T extends object>(obj: T, path: string, value: any): T {
     if (!path) return value as unknown as T;
+    // Если путь простой (без точек и скобок), просто обновляем ключ
+    if (!path.includes('.') && !path.includes('[') && !path.includes(']')) {
+        return { ...obj, [path]: value };
+    }
     const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
 
     const update = (current: any, index: number): any => {
