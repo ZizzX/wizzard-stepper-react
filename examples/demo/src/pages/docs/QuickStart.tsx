@@ -150,7 +150,7 @@ const TutorialContent = () => {
         </p>
         <Button 
           variant="outline" 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={() => document.getElementById('basic-usage')?.scrollIntoView({ behavior: 'smooth' })}
         >
           Read the Docs Below ↓
         </Button>
@@ -187,7 +187,7 @@ export default function QuickStart() {
         <TutorialContent />
       </WizardProvider>
 
-      <section className="space-y-6 pt-10 border-t border-gray-200">
+      <section id="basic-usage" className="space-y-6 pt-10 border-t border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900">Basic Usage</h2>
         <p className="text-gray-600">
           To get started, create a wizard context and wrap your application (or a part of it) in a provider.
