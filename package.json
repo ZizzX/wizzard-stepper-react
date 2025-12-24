@@ -24,7 +24,7 @@
     "test:run": "vitest run",
     "release": "release-it",
     "commit": "cz",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "overrides": {
     "glob": "^9.0.0"
