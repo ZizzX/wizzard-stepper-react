@@ -1,0 +1,20 @@
+# Source and config files
+src/
+examples/
+.github/
+.vscode/
+tsconfig.json
+tsup.config.ts
+eslint.config.js
+vite.config.ts
+
+# Logs and dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Editor files
+.idea/
+.DS_Store
+*.swp
