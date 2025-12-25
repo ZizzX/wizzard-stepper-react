@@ -37,10 +37,10 @@ export default function Examples() {
       color: "bg-emerald-50 text-emerald-600",
     },
     {
-      title: "Complex Data",
-      description: "Manage nested objects and arrays with deep path updates.",
+      title: "Complex Data & Performance",
+      description: "Optimized validation modes, deep paths, and auto-persistence.",
       path: "/complex",
-      icon: "📊",
+      icon: "⚡", // Changed icon to lightning
       color: "bg-amber-50 text-amber-600",
     },
     {

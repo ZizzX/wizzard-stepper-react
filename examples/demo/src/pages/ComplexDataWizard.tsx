@@ -135,11 +135,15 @@ const Step2 = React.memo(() => {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Children</h2>
-        <p className="text-gray-500 text-sm">Add your children's details.</p>
-      </div>
-
+        <div className="flex justify-between items-center">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-gray-900">Children</h2>
+            <p className="text-gray-500 text-sm">
+                This step uses <strong>onStepChange</strong> validation. 
+                Errors appear only after clicking Next, but clear <em>immediately</em> when you type.
+            </p>
+          </div>
+        </div>
       <div className="space-y-4">
         {childIds.map((id, index) => (
           <ChildRow

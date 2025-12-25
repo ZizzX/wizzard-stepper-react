@@ -54,10 +54,57 @@ export default function Validation() {
         </div>
       </section>
 
-      {/* 2. Custom Adapters */}
+      {/* 2. Validation Modes */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">2</div>
+          <h2 className="text-2xl font-bold text-gray-900">Validation Modes</h2>
+        </div>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          Control <strong>when</strong> validation logic is executed. This is crucial for performance and user experience. 
+          Use <code className="text-indigo-600 font-mono">validationMode</code> either globally or per-step.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
+            <code className="text-blue-700 font-bold block mb-2">onChange</code>
+            <p className="text-xs text-blue-600/80">
+              Validates as user types (debounced). Best for real-time feedback.
+            </p>
+          </div>
+          <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+            <code className="text-emerald-700 font-bold block mb-2">onStepChange</code>
+            <p className="text-xs text-emerald-600/80">
+              Validates only when navigating "Next". Best for heavy forms.
+            </p>
+          </div>
+          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+            <code className="text-gray-700 font-bold block mb-2">manual</code>
+            <p className="text-xs text-gray-600/80">
+              No automatic validation. Trigger via <code className="text-xs">validateStep()</code>.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
+          <pre className="space-y-2 text-gray-400">
+            <div><span className="text-purple-400">const</span> <span className="text-indigo-300">config</span><span className="text-emerald-400">:</span> <span className="text-amber-400">IWizardConfig</span> <span className="text-emerald-400">= {"{"}</span></div>
+            <div className="pl-4"><span className="text-indigo-400">steps</span><span className="text-emerald-400">: [</span></div>
+            <div className="pl-8"><span className="text-emerald-400">{"{"}</span></div>
+            <div className="pl-12"><span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'heavy-step'</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-12 text-gray-500">// Optimize: only validate on Next click</div>
+            <div className="pl-12"><span className="text-indigo-400">validationMode</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'onStepChange'</span></div>
+            <div className="pl-8"><span className="text-emerald-400">{"}"}</span></div>
+            <div className="pl-4"><span className="text-emerald-400">]</span></div>
+            <div className="text-emerald-400">{"};"}</div>
+          </pre>
+        </div>
+      </section>
+
+      {/* 3. Custom Adapters */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">3</div>
           <h2 className="text-2xl font-bold text-gray-900">Building Custom Adapters</h2>
         </div>
         <p className="text-gray-600 text-sm">
@@ -71,25 +118,45 @@ export default function Validation() {
         </div>
       </section>
 
-      {/* 3. Debouncing Validation */}
+      {/* 4. UX & Performance */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">3</div>
-          <h2 className="text-2xl font-bold text-gray-900">Debouncing Heavy Schemes</h2>
+          <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">4</div>
+          <h2 className="text-2xl font-bold text-gray-900">UX & Performance Improvements</h2>
         </div>
-        <p className="text-gray-600 text-sm">
-          Running complex Zod schemas on every keystroke can slow down your UI. 
-          Use the <code className="text-indigo-600 font-mono">debounceValidation</code> option 
-          in <code className="text-indigo-600 font-mono">setData</code> to keep things responsive.
-        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+           <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                Clear Error on Input
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                When using <code className="text-xs">onStepChange</code>, errors stay visible until the next attempt. 
+                However, for a better UX, <code className="text-indigo-600">wizzard-stepper-react</code> 
+                immediately clears a field's error as soon as the user starts typing to fix it.
+              </p>
+           </div>
+           <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 text-emerald-600">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Hash Table Optimization
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Errors are stored internally in a <strong>Map (Hash Table)</strong>. This ensures that 
+                adding, removing, or clearing errors is always an <strong>O(1)</strong> operation, 
+                keeping the UI snappy even with hundreds of fields.
+              </p>
+           </div>
+        </div>
 
-        <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
-          <pre className="text-gray-400">
-            <span className="text-indigo-300">setData</span><span className="text-emerald-400">(</span><span className="text-amber-400">'bio'</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">value</span><span className="text-emerald-400">, {"{"}</span><br/>
-            <span className="pl-4 text-gray-500">// Only run validation 500ms after user stops typing</span><br/>
-            <span className="pl-4"><span className="text-indigo-400">debounceValidation</span><span className="text-emerald-400">:</span> <span className="text-orange-400">500</span></span><br/>
-            <span className="text-emerald-400">{"}"});</span>
-          </pre>
+        <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 flex gap-4">
+          <div className="text-indigo-600 shrink-0">✨</div>
+          <p className="text-xs text-indigo-800 leading-relaxed">
+            <strong>Pro Tip:</strong> Use <code className="text-indigo-900 font-bold font-mono">debounceValidation</code> in 
+            <code className="text-indigo-900 font-bold font-mono">setData</code> to prevent heavy schemas from 
+            blocking the UI thread during rapid typing.
+          </p>
         </div>
       </section>
 

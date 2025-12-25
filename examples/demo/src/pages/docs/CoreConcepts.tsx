@@ -80,7 +80,7 @@ export default function CoreConcepts() {
             <div className="pl-8 text-emerald-400">{"}"}</div>
             <div className="pl-4 text-emerald-400">]<span className="text-emerald-400">,</span></div>
             <div className="pl-4 text-gray-500">// Global config</div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-300">autoValidate</span><span className="text-emerald-400">:</span> <span className="text-rose-400">true</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-4 text-gray-300"><span className="text-indigo-300">validationMode</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'onChange'</span><span className="text-emerald-400">,</span></div>
             <div className="pl-4 text-gray-300"><span className="text-indigo-300">onStepChange</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">from</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">) =&gt;</span> <span className="text-blue-400">console</span>.<span className="text-blue-400">log</span><span className="text-emerald-400">(</span><span className="text-amber-400">"Moved from "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">from</span> <span className="text-purple-400">+</span> <span className="text-amber-400">" to "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">)</span></div>
             <div className="text-emerald-400">{"}"}</div><span className="text-emerald-400">;</span>
           </pre>
@@ -95,9 +95,9 @@ export default function CoreConcepts() {
           </div>
           <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <h4 className="font-bold text-gray-900 mb-2">Validation</h4>
-            <p className="text-sm text-gray-500 line-clamp-3">
-              Attach Zod or Yup adapters to specific steps. Next button is
-              blocked until valid.
+            <p className="text-sm text-gray-500 line-clamp-4">
+              Attach Zod/Yup adapters and control <strong>when</strong> validation runs 
+              using <code className="text-xs">validationMode</code> (onChange, onStepChange, etc.)
             </p>
           </div>
           <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">

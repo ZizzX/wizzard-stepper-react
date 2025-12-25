@@ -202,34 +202,32 @@ setData('field.path', value, {
 
 By default, validation runs on every change (`onChange`). You can optimize this for heavy forms.
 
-### Granular Validation Control
+### ⚡ Performance & Validation
+### granular Validation Control
+You can control when validation happens using `validationMode`. This is critical for performance in large forms or heavy validation schemas.
 
-Control when validation occurs using `validationMode`:
-
-- `'onChange'`: Validate on every keystroke (debounced). Best for small forms.
-- `'onStepChange'`: Validate **only** when clicking Next. Best for heavy/complex forms.
-- `'manual'`: Validate only when you call `validateStep()`.
+- **`onChange`** (Default): Validates fields as you type (debounced). Best for immediate feedback.
+- **`onStepChange`**: Validates ONLY when trying to move to the next step.
+  - *Ux improvement*: If an error occurs, it appears. But as soon as the user starts typing to fix it, the error is **immediately cleared** locally (without triggering a full re-validation schema check), providing instant "clean" feedback.
+- **`manual`**: No automatic validation. You manually call `validateStep()`.
 
 ```typescript
 const config: IWizardConfig = {
-  // Global setting
-  validationMode: 'onChange', 
   steps: [
-    { 
-      id: 'step1', 
-      label: 'Fast Step',
-      // Inherits global (onChange)
-    },
-    { 
-      id: 'step2', 
-      label: 'Heavy Data',
-      // Override: Optimize for performance
-      validationMode: 'onStepChange', 
-      validationAdapter: new ZodAdapter(largeSchema)
+    {
+      id: 'heavy-step',
+      label: 'Complex Data',
+      // Optimize: Only validate on "Next" click
+      validationMode: 'onStepChange',                         
+      validationAdapter: new ZodAdapter(heavySchema)
     }
   ]
-}
+};
 ```
+
+### Internal Optimizations
+- **Hash Table Storage**: Errors are stored internally using `Map` (Hash Table) for **O(1)** access and deletion, ensuring UI stays snappy even with hundreds of errors.
+- **Path Caching**: Data access paths (e.g., `users[0].name`) are cached to eliminate parsing overhead during frequent typing.
 
 ## Conditional Steps
 
@@ -249,21 +247,23 @@ const config: IWizardConfig = {
 }
 ```
 
-## Persistence
+## 💾 Persistence
+Automatically save wizard progress so users don't lose data on reload.
 
-Save progress automatically to LocalStorage to survive page reloads.
-
-```tsx
+```typescript
 import { LocalStorageAdapter } from 'wizzard-stepper-react';
 
 const config: IWizardConfig = {
+  steps: [...],
   persistence: {
-    mode: 'onChange', // Save on every keystroke
-    adapter: new LocalStorageAdapter('my_wizard_prefix_')
-  },
-  steps: [...]
-}
+      adapter: new LocalStorageAdapter('my-wizard-key'),
+      mode: 'onStepChange' // or 'onChange' (heavier)
+  }
+};
 ```
+Everything (current step, data, visited state) is handled automatically! LocalStorage to survive page reloads.
+
+
 
 ## Advanced Features 🌟
 
