@@ -4,7 +4,8 @@ import { ZodAdapter, LocalStorageAdapter, shallowEqual } from "wizzard-stepper-r
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardFooter } from "../components/ui/Card";
+import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/Card";
+import { DeferredList } from "../components/DeferredList";
 import {
   WizardProvider,
   useWizardValue,
@@ -20,7 +21,7 @@ import {
 
 // 3. Define Steps using Typed Hooks
 const Step1 = React.memo(() => {
-  const { handleStepChange } = useWizardActions();
+  const { setData } = useWizardActions();
   const parentName = useWizardValue("parentName");
   const parentNameError = useWizardError("parentName");
 
@@ -36,7 +37,7 @@ const Step1 = React.memo(() => {
         label="Your Name"
         placeholder="Jane Doe"
         value={parentName || ""}
-        onChange={(e) => handleStepChange("parentName", e.target.value)}
+        onChange={(e) => setData("parentName", e.target.value)}
         error={parentNameError}
       />
     </div>
@@ -63,7 +64,8 @@ const ChildRow = React.memo(
     const nameError = useWizardError(`children.${index}.name`);
     const ageError = useWizardError(`children.${index}.age`);
 
-    console.log("ChildRow rendered");
+    // const nameError = useWizardError(`children.${index}.name`);
+    // const ageError = useWizardError(`children.${index}.age`);
 
     return (
       <div className="p-4 border border-gray-100 rounded-lg bg-gray-50 space-y-4 relative">
@@ -145,14 +147,19 @@ const Step2 = React.memo(() => {
           </div>
         </div>
       <div className="space-y-4">
-        {childIds.map((id, index) => (
-          <ChildRow
-            key={id}
-            childId={id}
-            index={index}
-            onRemove={removeChild}
-          />
-        ))}
+        <DeferredList
+          items={childIds}
+          chunkSize={15}
+          className="space-y-4"
+          renderItem={(id, index) => (
+            <ChildRow
+              key={id}
+              childId={id}
+              index={index}
+              onRemove={removeChild}
+            />
+          )}
+        />
 
         <Button
           variant="outline"
@@ -214,8 +221,24 @@ const wizardConfig: IWizardConfig<ComplexFormData, StepId> = {
 };
 
 const WizardInner = () => {
-  const { currentStep, isLastStep } = useWizardState();
+  const { currentStep, isLastStep, isLoading } = useWizardState();
   const { goToNextStep, clearStorage } = useWizardActions();
+
+  if (isLoading) {
+    return (
+      <div className="max-w-xl mx-auto py-8">
+        <Card className="shadow-xl shadow-indigo-50/50 animate-pulse">
+           <CardHeader>
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+              <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+           </CardHeader>
+           <CardContent className="h-64 flex items-center justify-center">
+              <span className="text-gray-400 font-medium">Restoring your data...</span>
+           </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!currentStep) return null;
 
