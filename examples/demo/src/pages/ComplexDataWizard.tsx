@@ -64,9 +64,6 @@ const ChildRow = React.memo(
     const nameError = useWizardError(`children.${index}.name`);
     const ageError = useWizardError(`children.${index}.age`);
 
-    // const nameError = useWizardError(`children.${index}.name`);
-    // const ageError = useWizardError(`children.${index}.age`);
-
     return (
       <div className="p-4 border border-gray-100 rounded-lg bg-gray-50 space-y-4 relative">
         <Button
