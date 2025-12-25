@@ -5,8 +5,8 @@ export default defineConfig({
     format: ['cjs', 'esm'],
     dts: true,
     splitting: false,
-    sourcemap: true,
+    sourcemap: false,
     clean: true,
-    minify: false, // Better for debugging, user can minify in their app
+    minify: true,
     external: ['react', 'react-dom', 'zod', 'yup'],
 });
