@@ -117,7 +117,7 @@ export default function RHFDocs() {
 
       {/* Navigation */}
       <DocsNavigation 
-        prev={{ label: "Security & Integrity", href: "/docs/security" }}
+        prev={{ label: "Performance", href: "/docs/performance" }}
         next={{ label: "Formik", href: "/docs/formik" }}
       />
     </div>

@@ -132,7 +132,7 @@ export default function SecurityDocs() {
       {/* Navigation */}
       <DocsNavigation 
         prev={{ label: "Step Rendering", href: "/docs/rendering" }}
-        next={{ label: "React Hook Form", href: "/docs/rhf" }}
+        next={{ label: "Performance", href: "/docs/performance" }}
       />
     </div>
   );

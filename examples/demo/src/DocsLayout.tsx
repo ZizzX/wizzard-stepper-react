@@ -26,6 +26,7 @@ const sidebarItems = [
       { id: "conditional", label: "Conditional Flow", path: "/docs/conditional-logic" },
       { id: "routing", label: "Routing & URL", path: "/docs/routing" },
       { id: "rendering", label: "Step Rendering", path: "/docs/rendering" },
+      { id: "performance", label: "Performance", path: "/docs/performance" },
       { id: "security", label: "Security & Integrity", path: "/docs/security" },
     ],
   },

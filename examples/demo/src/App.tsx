@@ -22,6 +22,7 @@ import Persistence from "./pages/docs/Persistence";
 import ConditionalLogic from "./pages/docs/ConditionalLogic";
 import RoutingDocs from "./pages/docs/RoutingDocs";
 import StepRendering from "./pages/docs/StepRendering";
+import PerformanceDocs from "./pages/docs/Performance";
 
 import ScrollToTop from "./components/ScrollToTop";
 import RHFDocs from "./pages/docs/RHF";
@@ -65,6 +66,7 @@ function App() {
             <Route path="conditional-logic" element={<ConditionalLogic />} />
             <Route path="routing" element={<RoutingDocs />} />
             <Route path="rendering" element={<StepRendering />} />
+            <Route path="performance" element={<PerformanceDocs />} />
             
             <Route path="rhf" element={<RHFDocs />} />
             <Route path="formik" element={<FormikDocs />} />

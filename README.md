@@ -204,6 +204,9 @@ By default, validation runs on every change (`onChange`). You can optimize this 
 
 ### ⚡ Performance & Validation
 ### granular Validation Control
+- 🧩 **Flexible adapters** for any validation or persistence logic
+- ⚡ **High Performance**: Stateless Provider architecture and O(1) internal lookups
+- 📦 **Zero Dependencies** (excluding React as peer)
 You can control when validation happens using `validationMode`. This is critical for performance in large forms or heavy validation schemas.
 
 - **`onChange`** (Default): Validates fields as you type (debounced). Best for immediate feedback.
@@ -409,6 +412,20 @@ Visit `/advanced` in the demo to try:
     *   **Step 1 (Identity)**: Refreshes persist (LocalStorage).
     *   **Step 2 (Security)**: Refreshes CLEAR data (MemoryAdapter).
 3.  **Declarative UI**: The steps are rendered using `<WizardStepRenderer />` with Framer Motion animations, defined in the config!
+
+### ⚡ Performance & Scalability
+
+`wizzard-stepper-react` is architected for extreme scale.
+
+- **Stateless Provider**: The main provider doesn't re-render when field values change. Only the specific components subscribed to those fields (via `useWizardValue`) re-render.
+- **O(1) Engine**: Internal lookups for step configuration, active steps, and indices use Hash Maps to ensure instant response times even with hundreds of steps.
+- **Deeply Nested Optimization**: Data access uses a memoized iterative path traversal, avoiding recursive overhead in deeply nested objects.
+- **Loading State**: Built-in `isLoading` state to handle high-latency persistence restoration gracefully.
+
+```tsx
+const { isLoading } = useWizardState();
+if (isLoading) return <SkeletonLoader />;
+```
 
 ## License
 
