@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function PerformanceDocs() {
   return (
@@ -97,13 +98,10 @@ export function DeferredList<T>({ items, renderItem, chunkSize = 10 }) {
         </div>
       </section>
 
-      <section className="bg-indigo-50 rounded-3xl p-8 border border-indigo-100">
-        <h3 className="text-lg font-bold text-indigo-900 mb-2">Pro Tip: useWizardSelector</h3>
-        <p className="text-indigo-800 text-sm leading-relaxed">
-          Always use <code>useWizardSelector</code> with <code>shallowEqual</code> when returning objects or arrays. 
-          This prevents redundant re-renders when other parts of the store update.
-        </p>
-      </section>
+      <ProTip>
+        Always use <code>useWizardSelector</code> with <code>shallowEqual</code> when returning objects or arrays. 
+        This prevents redundant re-renders when other parts of the store update.
+      </ProTip>
 
       <DocsNavigation 
         prev={{ label: "Security & Integrity", href: "/docs/security" }}

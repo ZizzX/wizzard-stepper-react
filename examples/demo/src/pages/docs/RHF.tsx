@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function RHFDocs() {
   return (
@@ -95,25 +96,12 @@ export default function RHFDocs() {
         </div>
       </section>
 
-      {/* 3. Security Tip */}
-      <section className="relative overflow-hidden rounded-3xl bg-indigo-600 p-8 shadow-2xl text-white">
-        <div className="absolute top-0 right-0 p-8 opacity-20">
-          <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M2.166 4.9L10 1.55l7.834 3.35a1 1 0 01.666.927v4.44a10 10 0 01-5.11 8.745l-3.047 1.704a1 1 0 01-.73 0l-3.047-1.704A10 10 0 011.5 10.917V5.827a1 1 0 01.666-.927zm7.834 1.332L4.61 8.527v2.39a8 8 0 004.053 6.914l1.337.748 1.337-.748a8 8 0 004.053-6.914V8.527L10 6.232z" clipRule="evenodd" />
-          </svg>
-        </div>
-        <div className="relative space-y-4">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            Professional Security Note
-          </h3>
-          <p className="max-w-2xl text-indigo-100 leading-relaxed">
-            When integrating with RHF, always use <code className="bg-white/10 px-1 rounded">mode: 'onTouched'</code> 
-            or <code className="bg-white/10 px-1 rounded">mode: 'onBlur'</code> for validation. 
-            This prevents unnecessary re-renders in the Wizard Provider and keeps the 
-            persistence adapter from being flooded with temporary, invalid draft state.
-          </p>
-        </div>
-      </section>
+      <ProTip>
+        When integrating with RHF, always use <code className="text-blue-900 bg-blue-50 px-1 rounded font-bold">mode: 'onTouched'</code> 
+        or <code className="text-blue-900 bg-blue-50 px-1 rounded font-bold">mode: 'onBlur'</code> for validation. 
+        This prevents unnecessary re-renders in the Wizard Provider and keeps the 
+        persistence adapter from being flooded with temporary, invalid draft state.
+      </ProTip>
 
       {/* Navigation */}
       <DocsNavigation 

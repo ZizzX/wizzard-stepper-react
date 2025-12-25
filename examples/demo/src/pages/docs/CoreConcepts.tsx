@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function CoreConcepts() {
   return (
@@ -423,12 +424,9 @@ export default function CoreConcepts() {
             <div className="text-emerald-400">&lt;/<span className="text-amber-400">WizardProvider</span>&gt;</div>
           </pre>
         </div>
-        <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex gap-4">
-           <div className="text-2xl">💡</div>
-           <div className="text-sm text-blue-800 leading-relaxed">
-             <strong>Pro Tip:</strong> When using <code className="text-xs">initialStepId</code>, the wizard is smart enough to still run conditions for previous steps to ensure the state remains consistent.
-           </div>
-        </div>
+        <ProTip>
+          When using <code className="text-xs">initialStepId</code>, the wizard is smart enough to still run conditions for previous steps to ensure the state remains consistent.
+        </ProTip>
       </section>
 
       {/* Navigation */}

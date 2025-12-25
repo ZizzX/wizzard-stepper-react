@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 import { WizardProvider, useWizard } from "../../wizards/docs-wizard";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -24,9 +25,9 @@ const TutorialStep1 = () => {
         onChange={(e) => handleStepChange("userName", e.target.value)}
         placeholder="Enter your name..."
       />
-      <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 italic text-sm text-indigo-700">
-        "Note how the UI is completely yours. I'm just a standard Input component."
-      </div>
+      <ProTip>
+        Note how the UI is completely yours. The library is "headless" and doesn't force any specific components on you.
+      </ProTip>
     </div>
   );
 };

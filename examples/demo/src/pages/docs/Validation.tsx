@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function Validation() {
   return (
@@ -40,18 +41,11 @@ export default function Validation() {
           </pre>
         </div>
 
-        <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex gap-4">
-          <div className="text-amber-600 shrink-0">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-xs text-amber-800 leading-relaxed">
-            <strong>Pro Tip:</strong> Use <code className="text-amber-900 font-bold font-mono">isLoading</code> from 
-            <code className="text-amber-900 font-bold font-mono">useWizard()</code> to disable your 
-            "Next" button while async validation is in flight.
-          </p>
-        </div>
+        <ProTip>
+          Use <code className="text-blue-900 font-bold font-mono">isLoading</code> from 
+          <code className="text-blue-900 font-bold font-mono">useWizard()</code> to disable your 
+          "Next" button while async validation is in flight.
+        </ProTip>
       </section>
 
       {/* 2. Validation Modes */}
@@ -150,14 +144,11 @@ export default function Validation() {
            </div>
         </div>
 
-        <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 flex gap-4">
-          <div className="text-indigo-600 shrink-0">✨</div>
-          <p className="text-xs text-indigo-800 leading-relaxed">
-            <strong>Pro Tip:</strong> Use <code className="text-indigo-900 font-bold font-mono">debounceValidation</code> in 
-            <code className="text-indigo-900 font-bold font-mono">setData</code> to prevent heavy schemas from 
-            blocking the UI thread during rapid typing.
-          </p>
-        </div>
+        <ProTip>
+          Use <code className="text-blue-900 font-bold font-mono">debounceValidation</code> in 
+          <code className="text-blue-900 font-bold font-mono">setData</code> to prevent heavy schemas from 
+          blocking the UI thread during rapid typing.
+        </ProTip>
       </section>
 
       {/* Navigation */}

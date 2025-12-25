@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function SecurityDocs() {
   return (
@@ -40,17 +41,11 @@ export default function SecurityDocs() {
           </div>
         </div>
         
-        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 text-sm text-indigo-800">
-            <p className="font-bold flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                Library Enhancement Proposal: Access Policy
-            </p>
-            <p>
-                We are currently considering adding a <code className="font-bold text-indigo-700">navigationPolicy</code> prop 
-                to the config: <code className="bg-white/50 px-1 rounded italic text-xs">'strict' | 'loose' | 'sequential'</code>. 
-                This would internalize the guard logic and make it declarative.
-            </p>
-        </div>
+        <ProTip>
+          We are currently considering adding a <code className="font-bold text-blue-900">navigationPolicy</code> prop 
+          to the config: <code className="bg-blue-100 px-1 rounded italic text-xs">'strict' | 'loose' | 'sequential'</code>. 
+          This would internalize the guard logic and make it declarative.
+        </ProTip>
       </section>
 
       {/* 2. Data Integrity (Encryption) */}

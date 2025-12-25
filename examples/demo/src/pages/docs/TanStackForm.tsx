@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function TanStackDocs() {
   return (
@@ -40,16 +41,11 @@ export default function TanStackDocs() {
         </div>
       </section>
 
-      {/* 2. Performance Note */}
-      <section className="space-y-6 border-l-4 border-yellow-500 pl-8 py-2">
-        <h3 className="text-lg font-bold text-gray-900">Granular Subscriptions</h3>
-        <p className="text-gray-600 text-sm leading-relaxed max-w-3xl">
-          Because TanStack Form uses a subscription-based model, it pairs perfectly 
-          with our <code className="text-indigo-600 font-bold bg-indigo-50 px-1 rounded">useWizardValue</code> hook. 
-          The component will only re-render when the specific field path changes, 
-          making it ideal for high-performance wizards with hundreds of inputs.
-        </p>
-      </section>
+      <ProTip>
+        Because TanStack Form uses a subscription-based model, it pairs perfectly 
+        with our <code className="text-blue-900 font-bold bg-blue-50 px-1 rounded">useWizardValue</code> hook. 
+        The component will only re-render when the specific field path changes.
+      </ProTip>
 
       {/* Navigation */}
       <DocsNavigation 

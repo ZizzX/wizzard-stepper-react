@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function HooksApi() {
   return (
@@ -239,25 +240,11 @@ export default function HooksApi() {
             </div>
           </div>
 
-          <div className="p-6 bg-indigo-600 rounded-3xl text-white space-y-4 shadow-xl shadow-indigo-200">
-            <h3 className="font-bold text-xl flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Pro Performance Tip
-            </h3>
-            <p className="text-indigo-100 text-sm leading-relaxed">
-              If you have a form with 50+ fields, avoid using <code className="text-white bg-indigo-500 px-1 rounded">useWizard()</code> at the root of the step. 
-              Instead, wrap individual inputs in small components that each use <code className="text-white bg-indigo-500 px-1 rounded">useWizardValue()</code>. 
-              This isolates updates and keeps your UI buttery smooth.
-            </p>
-            <div className="pt-2">
-              <div className="bg-indigo-700/50 rounded-xl p-4 font-mono text-[10px]">
-                <span className="text-indigo-200">// Good: Component re-renders only for 'name'</span><br/>
-                <span className="text-purple-300">const</span> <span className="text-indigo-300">name</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-400">'user.name'</span><span className="text-emerald-400">);</span>
-              </div>
-            </div>
-          </div>
+      <ProTip>
+        If you have a form with 50+ fields, avoid using <code className="text-blue-900 bg-blue-50 px-1 rounded">useWizard()</code> at the root of the step. 
+        Instead, wrap individual inputs in small components that each use <code className="text-blue-900 bg-blue-50 px-1 rounded">useWizardValue()</code>. 
+        This isolates updates and keeps your UI buttery smooth.
+      </ProTip>
         </div>
       </section>
 

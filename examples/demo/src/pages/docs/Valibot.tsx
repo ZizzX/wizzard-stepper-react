@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function ValibotDocs() {
   return (
@@ -24,6 +25,11 @@ export default function ValibotDocs() {
           Valibot is a great choice for mobile-first wizards where every kilobyte 
           counts. Here's a professional implementation of a Valibot adapter:
         </p>
+
+        <ProTip>
+          Valibot doesn't include a built-in adapter to keep the core library small. 
+          Use the pattern below to create a perfectly tailored one for your project.
+        </ProTip>
 
         <div className="bg-gray-900 overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
           <div className="p-8 font-mono text-[13px] leading-relaxed">

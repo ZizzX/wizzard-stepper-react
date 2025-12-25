@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function FormikDocs() {
   return (
@@ -25,6 +26,12 @@ export default function FormikDocs() {
           provider should typically be scoped to a single Step. This allows each 
           step to have its own lifecycle and validation schema.
         </p>
+
+        <ProTip>
+          If your Formik schemas are complex, use <code className="text-blue-900 font-bold">manual</code> persistence mode. 
+          This ensures that data is only persisted when the user clicks "Next", preventing 
+          intermediate invalid state from being saved to LocalStorage.
+        </ProTip>
 
         <div className="bg-gray-900 overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
           <div className="bg-gray-800/50 px-6 py-3 border-b border-white/5 flex items-center justify-between">

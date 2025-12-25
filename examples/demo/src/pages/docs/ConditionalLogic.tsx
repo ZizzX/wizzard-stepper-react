@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function ConditionalLogic() {
   return (
@@ -123,15 +124,11 @@ export default function ConditionalLogic() {
         </div>
       </section>
 
-      {/* Best Practices */}
-      <section className="space-y-6 pt-10 border-t border-gray-100 text-center">
-        <h3 className="text-xl font-bold text-gray-900">Pro Tip</h3>
-        <p className="text-gray-600 max-w-2xl mx-auto italic">
-          "Don't put complex business logic inside step conditions. If a condition 
-          requires more than 3 lines of code, extract it to a standalone utility 
-          function for better testability."
-        </p>
-      </section>
+      <ProTip>
+        Don't put complex business logic inside step conditions. If a condition 
+        requires more than 3 lines of code, extract it to a standalone utility 
+        function for better testability.
+      </ProTip>
 
       {/* Navigation */}
       <DocsNavigation 

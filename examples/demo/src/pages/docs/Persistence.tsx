@@ -1,4 +1,5 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { ProTip } from "../../components/ProTip";
 
 export default function Persistence() {
   return (
@@ -125,6 +126,12 @@ export default function Persistence() {
             </div>
           </div>
         </div>
+
+        <ProTip>
+          Always call <code className="text-blue-900 font-bold">clearStorage()</code> or <code className="text-blue-900 font-bold">resetWizard()</code> 
+          when a user successfully completes the wizard. This prevents old data from appearing 
+          on their next visit.
+        </ProTip>
       </section>
 
       {/* Navigation */}
