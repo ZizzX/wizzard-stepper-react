@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.0...v1.7.1) (2025-12-25)
+
+
+### Features
+
+* add main application layout with header, navigation, and footer ([6286cd2](https://github.com/ZizzX/wizzard-stepper-react/commit/6286cd2f5ddd4b158d02a1f28267d5a175a45493))
+
 # [1.7.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.5.0...v1.7.0) (2025-12-25)
 
 
