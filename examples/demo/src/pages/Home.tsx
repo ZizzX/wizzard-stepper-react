@@ -15,16 +15,18 @@ export default function Home() {
           A flexible, headless wizard stepper for React. Persistence,
           validation, and complex flows made simple.
         </p>
-        <div className="flex items-center justify-center gap-4 pt-4">
+        <div className="flex items-center justify-center md:gap-4 gap-2 pt-4">
           <Button
-            size="lg"
+            size="md"
+            className="md:text-lg xs:text-base xs:px-2 md:px-8 sm:h-11"
             onClick={() => navigate("/docs/introduction")}
           >
             Get Started
           </Button>
           <Button
             variant="outline"
-            size="lg"
+            size="md"
+            className="md:text-lg xs:text-base sm:h-11"
             onClick={() => navigate("/examples")}
           >
             View Examples
