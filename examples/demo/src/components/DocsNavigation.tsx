@@ -15,8 +15,8 @@ const MotionLink = motion(Link);
 
 export default function DocsNavigation({ prev, next }: DocsNavigationProps) {
   return (
-    <div className="pt-10 mt-12 border-t border-gray-200 flex flex-col sm:flex-row justify-between gap-4">
-      <div className="flex-1">
+    <div className="pt-10 mt-12 border-t border-gray-200 flex flex-col flex-row justify-between gap-4">
+      <div>
         {prev && (
           <MotionLink
             to={prev.href}
@@ -36,7 +36,7 @@ export default function DocsNavigation({ prev, next }: DocsNavigationProps) {
         )}
       </div>
 
-      <div className="flex-1 flex justify-end">
+      <div>
         {next && (
           <MotionLink
             to={next.href}
