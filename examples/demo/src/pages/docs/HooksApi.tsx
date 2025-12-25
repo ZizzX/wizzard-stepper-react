@@ -210,6 +210,7 @@ export default function HooksApi() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* A: Hook Selection Guide */}
           <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h3 className="font-bold text-gray-900 flex items-center gap-2">
               <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">A</span>
@@ -218,21 +219,21 @@ export default function HooksApi() {
             <div className="space-y-3">
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="text-xs font-bold text-indigo-600 mb-1">useWizardValue / Selector</div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-600 leading-relaxed">
                   <strong>Best for:</strong> Input fields, status indicators, and labels. 
                   Prevents re-rendering the whole form when typing.
                 </p>
               </div>
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="text-xs font-bold text-indigo-600 mb-1">useWizardActions</div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-600 leading-relaxed">
                   <strong>Best for:</strong> "Next", "Back", and "Submit" buttons. 
                   Zero re-renders because it only returns stable methods.
                 </p>
               </div>
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div className="text-xs font-bold text-indigo-600 mb-1">useWizard</div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-gray-600 leading-relaxed">
                   <strong>Best for:</strong> Step-level orchestration or small forms. 
                   Subscribes to all state changes.
                 </p>
@@ -240,12 +241,59 @@ export default function HooksApi() {
             </div>
           </div>
 
-      <ProTip>
-        If you have a form with 50+ fields, avoid using <code className="text-blue-900 bg-blue-50 px-1 rounded">useWizard()</code> at the root of the step. 
-        Instead, wrap individual inputs in small components that each use <code className="text-blue-900 bg-blue-50 px-1 rounded">useWizardValue()</code>. 
-        This isolates updates and keeps your UI buttery smooth.
-      </ProTip>
+          {/* B: Decision Matrix */}
+          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner space-y-4">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs">B</span>
+              Quick Decision Matrix
+            </h3>
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <table className="w-full text-[11px] text-left">
+                    <thead className="bg-gray-50 text-[9px] font-black uppercase text-gray-500 border-b border-gray-200">
+                        <tr>
+                            <th className="px-3 py-2">Need...</th>
+                            <th className="px-3 py-2">Use Hook</th>
+                            <th className="px-3 py-2 text-center">Renders</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        <tr>
+                            <td className="px-3 py-2 text-gray-600 font-medium">Single Field</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">Value</td>
+                            <td className="px-3 py-2 text-center text-emerald-600 font-bold">Atomic</td>
+                        </tr>
+                        <tr>
+                            <td className="px-3 py-2 text-gray-600 font-medium">Nav Buttons</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">Actions</td>
+                            <td className="px-3 py-2 text-center text-blue-600 font-bold">Zero</td>
+                        </tr>
+                        <tr>
+                            <td className="px-3 py-2 text-gray-600 font-medium">Step Logic</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">useWizard</td>
+                            <td className="px-3 py-2 text-center text-rose-500 font-bold">Full</td>
+                        </tr>
+                        <tr>
+                            <td className="px-3 py-2 text-gray-600 font-medium">Metadata</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">State</td>
+                            <td className="px-3 py-2 text-center text-amber-500 font-bold">Minimal</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <p className="text-[10px] text-amber-800 leading-relaxed font-medium">
+                    🔍 <strong>Rule of Thumb:</strong> If your component doesn't display any wizard data, 
+                    always prefer <code>useWizardActions</code> for maximum performance.
+                </p>
+            </div>
+          </div>
         </div>
+
+        <ProTip>
+            If you have a form with 50+ fields, avoid using <code className="text-blue-900 bg-blue-50 px-1 rounded">useWizard()</code> at the root of the step. 
+            Instead, wrap individual inputs in small components that each use <code className="text-blue-900 bg-blue-50 px-1 rounded">useWizardValue()</code>. 
+            This isolates updates and keeps your UI buttery smooth.
+        </ProTip>
       </section>
 
       {/* Navigation */}
