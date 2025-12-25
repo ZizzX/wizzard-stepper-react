@@ -18,6 +18,7 @@ export const complexSchema = z.object({
 export type ComplexFormData = z.infer<typeof complexSchema>;
 export type Child = ComplexFormData["children"][0];
 
+export type StepId = "parent" | "children" | "summary";
 // 2. Create Typed Wizard Factory
 // This gives us hooks strictly typed to FormData
 export const {
@@ -28,4 +29,4 @@ export const {
   useWizardSelector,
   useWizardState,
   createStep,
-} = createWizardFactory<ComplexFormData>();
+} = createWizardFactory<ComplexFormData, StepId>();

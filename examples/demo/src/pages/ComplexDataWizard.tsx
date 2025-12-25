@@ -15,6 +15,7 @@ import {
   complexSchema,
   type ComplexFormData,
   type Child,
+  type StepId,
 } from "../wizards/complex-wizard";
 
 // 3. Define Steps using Typed Hooks
@@ -187,7 +188,7 @@ const Step3 = React.memo(() => {
 });
 
 // 4. Config matches FormData
-const wizardConfig: IWizardConfig<ComplexFormData> = {
+const wizardConfig: IWizardConfig<ComplexFormData, StepId> = {
   steps: [
     {
       id: "parent",
