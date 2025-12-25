@@ -1,4 +1,4 @@
-import { useWizard } from 'wizzard-stepper-react';
+import { useWizardState, useWizardActions } from 'wizzard-stepper-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 
@@ -11,12 +11,15 @@ export const StepperControls = ({ onComplete }: StepperControlsProps) => {
     currentStepIndex,
     isFirstStep,
     isLastStep,
-    goToNextStep,
-    goToPrevStep,
     activeSteps,
     isLoading,
+  } = useWizardState();
+  
+  const {
+    goToNextStep,
+    goToPrevStep,
     clearStorage,
-  } = useWizard();
+  } = useWizardActions();
   const navigate = useNavigate();
 
   if (isLoading) return null;

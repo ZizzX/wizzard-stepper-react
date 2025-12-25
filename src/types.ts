@@ -77,6 +77,13 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
      * Override global persistence adapter for this specific step.
      */
     persistenceAdapter?: IPersistenceAdapter;
+    /**
+     * Control when persistence occurs for this specific step.
+     * - 'onStepChange': Save when moving between steps (default)
+     * - 'onChange': Save on every data change (debounced)
+     * - 'manual': Save only when manually triggered
+     */
+    persistenceMode?: PersistenceMode;
 }
 
 /**

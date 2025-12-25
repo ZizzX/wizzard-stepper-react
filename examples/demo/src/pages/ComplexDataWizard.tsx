@@ -1,17 +1,17 @@
 import React, { useCallback } from "react";
 import type { IWizardConfig } from "wizzard-stepper-react";
-import { ZodAdapter, LocalStorageAdapter } from "wizzard-stepper-react";
+import { ZodAdapter, LocalStorageAdapter, shallowEqual } from "wizzard-stepper-react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
 import {
   WizardProvider,
-  useWizard,
   useWizardValue,
   useWizardActions,
   useWizardError,
   useWizardSelector,
+  useWizardState,
   complexSchema,
   type ComplexFormData,
   type Child,
@@ -20,12 +20,8 @@ import {
 // 3. Define Steps using Typed Hooks
 const Step1 = React.memo(() => {
   const { handleStepChange } = useWizardActions();
-  // "parentName" is autocompleted and return type is string
   const parentName = useWizardValue("parentName");
-
-  // Access typed errors
-  const { allErrors } = useWizard();
-  const errors = allErrors["parent"] || {};
+  const parentNameError = useWizardError("parentName");
 
   return (
     <div className="space-y-6">
@@ -40,7 +36,7 @@ const Step1 = React.memo(() => {
         placeholder="Jane Doe"
         value={parentName || ""}
         onChange={(e) => handleStepChange("parentName", e.target.value)}
-        error={errors["parentName"]}
+        error={parentNameError}
       />
     </div>
   );
@@ -66,6 +62,8 @@ const ChildRow = React.memo(
     const nameError = useWizardError(`children.${index}.name`);
     const ageError = useWizardError(`children.${index}.age`);
 
+    console.log("ChildRow rendered");
+
     return (
       <div className="p-4 border border-gray-100 rounded-lg bg-gray-50 space-y-4 relative">
         <Button
@@ -82,9 +80,7 @@ const ChildRow = React.memo(
             label={`Child #${index + 1} Name`}
             value={name || ""}
             onChange={(e) => {
-              setData(`children.${index}.name`, e.target.value, {
-                debounceValidation: 200,
-              });
+              setData(`children.${index}.name`, e.target.value);
             }}
             error={nameError}
           />
@@ -93,9 +89,7 @@ const ChildRow = React.memo(
             type="number"
             value={age || 0}
             onChange={(e) => {
-              setData(`children.${index}.age`, Number(e.target.value), {
-                debounceValidation: 200,
-              });
+              setData(`children.${index}.age`, Number(e.target.value));
             }}
             error={ageError}
           />
@@ -109,12 +103,14 @@ const Step2 = React.memo(() => {
   const { setData, getData } = useWizardActions();
 
   // Typed selector: state is correctly inferred as FormData
-  const childIds = useWizardSelector((state) =>
-    (state.children || []).map((c) => c.id)
+  const childIds = useWizardSelector(
+    (state) => (state.children || []).map((c) => c.id),
+    { isEqual: shallowEqual } 
   );
   const childrenError = useWizardError("children");
 
   const addChild = useCallback(() => {
+    console.log("Adding child");
     // getData is also typed!
     const currentChildren = (getData("children") || []) as Child[];
     const newChildren = [
@@ -126,12 +122,15 @@ const Step2 = React.memo(() => {
 
   const removeChild = useCallback(
     (id: string) => {
+      console.log("Removing child", id);
       const currentChildren = (getData("children") || []) as Child[];
       const newChildren = currentChildren.filter((c: Child) => c.id !== id);
       setData("children", newChildren);
     },
-    [setData, getData]
+    []
   );
+
+  console.log("step2 rendered");
 
   return (
     <div className="space-y-6">
@@ -171,7 +170,7 @@ const Step2 = React.memo(() => {
 });
 
 const Step3 = React.memo(() => {
-  const { wizardData } = useWizard();
+  const wizardData = useWizardSelector((s) => s, { isEqual: shallowEqual });
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -201,6 +200,7 @@ const wizardConfig: IWizardConfig<ComplexFormData> = {
       id: "children",
       label: "Children",
       // Optimize performance by delaying validation until "Next" is clicked
+      persistenceMode: "onStepChange",
       validationMode: "onStepChange",
       validationAdapter: new ZodAdapter(complexSchema.pick({ children: true })),
     },
@@ -213,7 +213,8 @@ const wizardConfig: IWizardConfig<ComplexFormData> = {
 };
 
 const WizardInner = () => {
-  const { currentStep, goToNextStep, isLastStep, clearStorage } = useWizard();
+  const { currentStep, isLastStep } = useWizardState();
+  const { goToNextStep, clearStorage } = useWizardActions();
 
   if (!currentStep) return null;
 

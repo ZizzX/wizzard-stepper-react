@@ -192,9 +192,6 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   // Store for granular data and errors
   const storeRef = useRef(new WizardStore<T>((initialData || {}) as T));
 
-  // local state for dependencies
-  const [wizardData, setWizardData] = useState<T>((initialData || {}) as T);
-
   // Persistence Setup
   const persistenceAdapter = useMemo<IPersistenceAdapter>(() => {
     return config.persistence?.adapter || new MemoryAdapter();
@@ -202,37 +199,53 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
   const persistenceMode = config.persistence?.mode || "onStepChange";
 
-  // Calculate Active Steps (Conditional Logic) - Stabilized to prevent global re-renders
-  // --- Optimization: Sync Active Steps Calculation ---
+  // --- Optimization: Static Step Map ---
+  const stepsMap = useMemo(() => {
+    const map = new Map<StepId, IStepConfig<any, T, StepId>>();
+    config.steps.forEach((step: IStepConfig<any, T, StepId>) => map.set(step.id, step));
+    return map;
+  }, [config.steps]);
+
   // We use a ref to track the last calculated steps to ensure referential strictness
-  const lastActiveStepsRef = useRef<IStepConfig<unknown, T, StepId>[]>([]);
+  const lastActiveStepsRef = useRef<IStepConfig<any, T, StepId>[]>([]);
   
-  const activeSteps = useMemo(() => {
-    const nextActiveSteps = config.steps.filter((step) => {
-      if (step.condition) {
-        return step.condition(wizardData);
+  // Optimized: Calculate Active Steps reactively from the store
+  const activeSteps = useSyncExternalStore(
+    storeRef.current.subscribe,
+    useCallback(() => {
+      const currentData = storeRef.current.getSnapshot().data;
+      const nextActiveSteps = config.steps.filter((step: IStepConfig<any, T, StepId>) => {
+        if (step.condition) {
+          return step.condition(currentData);
+        }
+        return true;
+      });
+
+      // Check if structure changed (ids match) - shallow check optimized for step stability
+      const prevIds = lastActiveStepsRef.current.map(s => s.id).join('.');
+      const nextIds = nextActiveSteps.map(s => s.id).join('.');
+
+      if (prevIds === nextIds && lastActiveStepsRef.current.length > 0) {
+         return lastActiveStepsRef.current;
       }
-      return true;
-    });
 
-    // Check if structure changed (ids match) - shallow check optimized for step stability
-    const prevIds = lastActiveStepsRef.current.map(s => s.id).join('.');
-    const nextIds = nextActiveSteps.map(s => s.id).join('.');
+      lastActiveStepsRef.current = nextActiveSteps;
+      return nextActiveSteps;
+    }, [config.steps])
+  );
 
-    if (prevIds === nextIds && lastActiveStepsRef.current.length > 0) {
-       return lastActiveStepsRef.current;
-    }
-
-    lastActiveStepsRef.current = nextActiveSteps;
-    return nextActiveSteps;
-  }, [config.steps, wizardData]);
+  const activeStepsIndexMap = useMemo(() => {
+    const map = new Map<StepId, number>();
+    activeSteps.forEach((s: IStepConfig<any, T, StepId>, i: number) => map.set(s.id, i));
+    return map;
+  }, [activeSteps]);
 
   // Set initial step if not set (with optional initialStepId)
   useEffect(() => {
     if (!currentStepId && activeSteps.length > 0) {
       if (initialStepId) {
         // Validation: verify initialStepId exists in active steps
-        const target = activeSteps.find((s) => s.id === initialStepId);
+        const target = activeSteps.find((s: IStepConfig<any, T, StepId>) => s.id === initialStepId);
         if (target) {
           setCurrentStepId(target.id);
         } else {
@@ -250,7 +263,9 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   // We hold all "changing" values in a ref so actions can remain stable
   const stateRef = useRef({
     config,
+    stepsMap,
     activeSteps,
+    activeStepsIndexMap,
     visitedSteps,
     completedSteps,
     persistenceMode,
@@ -261,7 +276,9 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   // Update ref on every render - this is fast
   stateRef.current = {
     config,
+    stepsMap,
     activeSteps,
+    activeStepsIndexMap,
     visitedSteps,
     completedSteps,
     persistenceMode,
@@ -271,12 +288,12 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
   // Derived state
   const currentStep = useMemo(
-    () => activeSteps.find((s) => s.id === currentStepId) || null,
-    [activeSteps, currentStepId]
+    () => stepsMap.get(currentStepId as StepId) || null,
+    [stepsMap, currentStepId]
   );
   const currentStepIndex = useMemo(
-    () => activeSteps.findIndex((s) => s.id === currentStepId),
-    [activeSteps, currentStepId]
+    () => activeStepsIndexMap.get(currentStepId as StepId) ?? -1,
+    [activeStepsIndexMap, currentStepId]
   );
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === activeSteps.length - 1;
@@ -311,11 +328,9 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
     });
 
     if (Object.keys(loadedData).length > 0) {
-      setWizardData((prev) => {
-        const newData = { ...prev, ...loadedData };
-        storeRef.current.update(newData);
-        return newData;
-      });
+      const currentData = storeRef.current.getSnapshot().data;
+      const newData = { ...currentData, ...loadedData };
+      storeRef.current.update(newData);
     }
     setIsLoading(false);
   }, []); // Empty dependency array!
@@ -328,12 +343,14 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   // Save logic stabilized
   const saveData = useCallback(
     (mode: PersistenceMode, stepId: string, data: any) => {
-      const { config, persistenceAdapter, persistenceMode } = stateRef.current;
-      const stepConfig = config.steps.find((s) => s.id === stepId);
+      const { stepsMap, persistenceAdapter, persistenceMode: globalMode } = stateRef.current;
+      const stepConfig = stepsMap.get(stepId as StepId);
       const stepAdapter = stepConfig?.persistenceAdapter;
+      const stepMode = stepConfig?.persistenceMode;
       const adapterToUse = stepAdapter || persistenceAdapter;
+      const modeToUse = stepMode || globalMode;
 
-      if (mode === persistenceMode || mode === "manual") {
+      if (mode === modeToUse || mode === "manual") {
         adapterToUse.saveStep(stepId, data);
       }
     },
@@ -347,8 +364,8 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
   const validateStep = useCallback(
     async (stepId: StepId, data: T): Promise<boolean> => {
-      const { config } = stateRef.current;
-      const step = config.steps.find((s) => s.id === stepId);
+      const { stepsMap } = stateRef.current;
+      const step = stepsMap.get(stepId as StepId);
       if (!step || !step.validationAdapter) {
         return true;
       }
@@ -394,11 +411,11 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
       const newData = { ...prevData, ...data };
 
       storeRef.current.update(newData);
-      startTransition(() => {
-        setWizardData(newData);
-      });
 
-      if (persistenceMode === "onChange") {
+      const stepConfig = stateRef.current.stepsMap.get(stepId as StepId);
+      const effectiveMode = stepConfig?.persistenceMode || persistenceMode;
+
+      if (effectiveMode === "onChange") {
         saveData("onChange", stepId, newData);
       }
     },
@@ -407,7 +424,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
   const setData = useCallback(
     (path: string, value: any, options?: { debounceValidation?: number }) => {
-      const { persistenceMode } = stateRef.current;
+      const { persistenceMode, stepsMap } = stateRef.current;
       const prevData = storeRef.current.getSnapshot().data;
       
       const currentValue = getByPath(prevData, path);
@@ -415,24 +432,16 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
       const newData = setByPath(prevData, path, value);
 
+      // --- Batching Strategy: Update Store First ---
       storeRef.current.update(newData);
-      startTransition(() => {
-        setWizardData(newData);
-      });
-
-      // Stable capture of ID and Config
+      
       const activeStepId = stateRef.current.currentStepId;
-      const { config } = stateRef.current;
+      const stepConfig = stepsMap.get(activeStepId as StepId);
 
       // 4. Clear Error on Input (UX Improvement + Optimization)
-      // If there is an existing error for this specific path, clear it immediately
-      // Using O(1) Map lookup and delete logic internal to store
       if (activeStepId) {
          const wasDeleted = storeRef.current.deleteError(activeStepId, path);
          if (wasDeleted) {
-             // State is already updated in store via syncErrors()
-             setAllErrorsState(storeRef.current.getSnapshot().errors);
-             
              // Check if step is now clean to update errorSteps
              if (!storeRef.current.errorsMap.has(activeStepId)) {
                   setErrorSteps(prev => {
@@ -444,10 +453,16 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
          }
       }
 
+      // Sync React state last - only for errors to update errorSteps
+      if (activeStepId && storeRef.current.getSnapshot().errors[activeStepId]) {
+         startTransition(() => {
+            setAllErrorsState(storeRef.current.getSnapshot().errors);
+         });
+      }
+
       // Determine Validation Mode
-      // Priority: Step Config > Global Config > 'onChange' (default)
-      const stepConfig = config.steps.find(s => s.id === activeStepId);
-      const mode = stepConfig?.validationMode ?? config.validationMode ?? 'onChange'; // Default to onChange for backward compat if undefined
+      const { config } = stateRef.current;
+      const mode = stepConfig?.validationMode ?? config.validationMode ?? 'onStepChange';
 
       // 3. Conditional Validation Logic
       if (mode === 'onChange') {
@@ -469,9 +484,9 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
              if (activeStepId) validateStep(activeStepId as StepId, newData);
           }
       } 
-      // strict check: recursive validation or manual trigger only for other modes
 
-      if (persistenceMode === "onChange" && activeStepId) {
+      const effectivePersistenceMode = stepConfig?.persistenceMode ?? persistenceMode;
+      if (effectivePersistenceMode === "onChange" && activeStepId) {
         saveData("onChange", activeStepId as StepId, newData);
       }
     },
@@ -485,9 +500,6 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
       const newData = options?.replace ? (data as T) : { ...prevData, ...data };
 
       storeRef.current.update(newData);
-      startTransition(() => {
-        setWizardData(newData);
-      });
 
       config.steps.forEach((step) => {
         saveData("manual", step.id, newData);
@@ -519,7 +531,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
     // Optimization: Parallel validation
     const currentData = storeRef.current.getSnapshot().data;
     const validationResults = await Promise.all(
-        activeSteps.map(step => validateStep(step.id, currentData))
+        activeSteps.map((step: IStepConfig<any, T, StepId>) => validateStep(step.id, currentData))
     );
     
     const isValid = validationResults.every(Boolean);
@@ -530,21 +542,22 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   const goToStep = useCallback(
     async (stepId: StepId): Promise<boolean> => {
       const { 
-          activeSteps, 
+          activeStepsIndexMap,
           currentStepId, 
           config, 
           persistenceMode, 
           visitedSteps, 
           completedSteps, 
-          persistenceAdapter 
+          persistenceAdapter,
+          stepsMap
       } = stateRef.current;
 
-      const targetIndex = activeSteps.findIndex((s) => s.id === stepId);
+      const targetIndex = activeStepsIndexMap.get(stepId) ?? -1;
       if (targetIndex === -1) return false;
 
       const currentData = storeRef.current.getSnapshot().data;
-      const currentStepIndex = activeSteps.findIndex(s => s.id === currentStepId);
-      const currentStep = activeSteps[currentStepIndex];
+      const currentStepIndex = activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
+      const currentStep = stepsMap.get(currentStepId as StepId);
 
       if (targetIndex > currentStepIndex) {
         const shouldValidate =
@@ -555,8 +568,11 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
         }
       }
 
-      if (persistenceMode === "onStepChange" && currentStep && currentStepId) {
-        saveData("onStepChange", currentStepId as StepId, currentData);
+      if (currentStep && currentStepId) {
+        const effectivePersistenceMode = currentStep.persistenceMode ?? persistenceMode;
+        if (effectivePersistenceMode === "onStepChange") {
+           saveData("onStepChange", currentStepId as StepId, currentData);
+        }
       }
 
       const nextVisited = new Set(visitedSteps);
@@ -585,8 +601,8 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   );
   
   const goToNextStep = useCallback(async () => {
-    const { activeSteps, currentStepId, completedSteps, visitedSteps, persistenceMode, persistenceAdapter } = stateRef.current;
-    const currentStepIndex = activeSteps.findIndex(s => s.id === currentStepId);
+    const { activeSteps, activeStepsIndexMap, currentStepId, completedSteps, persistenceMode } = stateRef.current;
+    const currentStepIndex = activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
     
     if (currentStepIndex === -1 || currentStepIndex === activeSteps.length - 1) return;
     
@@ -609,8 +625,8 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   }, [goToStep]); // Only depends on goToStep (which is stable)
 
   const goToPrevStep = useCallback(() => {
-    const { activeSteps, currentStepId } = stateRef.current;
-    const currentStepIndex = activeSteps.findIndex(s => s.id === currentStepId);
+    const { activeSteps, activeStepsIndexMap, currentStepId } = stateRef.current;
+    const currentStepIndex = activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
     if (currentStepIndex <= 0) return;
     const prevStep = activeSteps[currentStepIndex - 1];
     if (prevStep) {
@@ -706,10 +722,14 @@ export function useWizardState<T = unknown, StepId extends string = string>(): I
   return context as IWizardState<T, StepId>;
 }
 
-export function useWizardValue<TValue = any>(path: string): TValue {
+export function useWizardValue<TValue = any>(
+  path: string,
+  options?: { isEqual?: (a: TValue, b: TValue) => boolean }
+): TValue {
   const { store } = useWizardState();
   const lastStateRef = useRef<any>(null);
   const lastValueRef = useRef<any>(null);
+  const isEqual = options?.isEqual || Object.is;
 
   const getSnapshot = useCallback(() => {
     const fullState = store.getSnapshot();
@@ -717,11 +737,18 @@ export function useWizardValue<TValue = any>(path: string): TValue {
     if (data === lastStateRef.current) {
       return lastValueRef.current;
     }
-    const value = getByPath(data, path);
+    const value = getByPath(data, path) as TValue;
+    
+    // Memoization with custom equality
+    if (lastValueRef.current !== undefined && isEqual(lastValueRef.current, value)) {
+      lastStateRef.current = data;
+      return lastValueRef.current;
+    }
+
     lastStateRef.current = data;
     lastValueRef.current = value;
     return value;
-  }, [store, path]);
+  }, [store, path, isEqual]);
 
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
@@ -756,24 +783,32 @@ export function useWizardError(path: string): string | undefined {
 }
 
 export function useWizardSelector<TSelected = any>(
-  selector: (state: any) => TSelected
+  selector: (state: any) => TSelected,
+  options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
 ): TSelected {
   const { store } = useWizardState();
   const lastStateRef = useRef<any>(null);
   const lastResultRef = useRef<any>(null);
+  const isEqual = options?.isEqual || Object.is;
 
   const getSnapshot = useCallback(() => {
     const fullState = store.getSnapshot();
     if (fullState === lastStateRef.current) {
       return lastResultRef.current;
     }
-    // We pass only data to the selector for convenience, or the whole store state?
-    // Let's pass the whole thing in case they need errors
+    
     const result = selector(fullState.data);
+    
+    // Memoization with custom equality
+    if (lastResultRef.current !== null && isEqual(lastResultRef.current, result)) {
+      lastStateRef.current = fullState;
+      return lastResultRef.current;
+    }
+
     lastStateRef.current = fullState;
     lastResultRef.current = result;
     return result;
-  }, [store, selector]);
+  }, [store, selector, isEqual]);
 
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
@@ -794,15 +829,15 @@ export function useWizardContext<T = any, StepId extends string = string>(): IWi
 
   // Backward compatibility: subscribe to everything
   const wizardData = useWizardSelector<T>((s) => s as T);
-  const fullState = state.store.getSnapshot();
+  const allErrors = useSyncExternalStore(state.store.subscribe, () => state.store.getSnapshot().errors);
 
   return useMemo(
     () => ({
       ...state,
       ...actions,
       wizardData,
-      allErrors: fullState.errors,
+      allErrors,
     }),
-    [state, actions, wizardData, fullState.errors]
+    [state, actions, wizardData, allErrors]
   );
 }

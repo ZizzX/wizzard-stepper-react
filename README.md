@@ -317,22 +317,31 @@ return <WizardProvider config={config} initialStepId={stepId}>...</WizardProvide
 
 ### 3. Granular Persistence
 
-By default, the wizard uses `MemoryAdapter` (RAM only). You can enable `LocalStorage` globally, but override it for sensitive steps.
+By default, the wizard uses `MemoryAdapter` (RAM only). You can enable `LocalStorage` globally, but override it or its **behavior** (mode) for individual steps.
 
 ```tsx
 const config: IWizardConfig = {
-  // Global: Persist everything to LocalStorage
-  persistence: { adapter: new LocalStorageAdapter('wizard_') },
+  // Global: Persist everything to LocalStorage on every step change
+  persistence: { 
+    adapter: new LocalStorageAdapter('wizard_'),
+    mode: 'onStepChange' 
+  },
   steps: [
     { 
       id: 'public', 
       label: 'Public Info',
-      // Inherits global adapter (LocalStorage)
+      // Inherits global settings
+    },
+    { 
+      id: 'realtime', 
+      label: 'Active Draft',
+      // Override Mode: Save to local storage on every keystroke
+      persistenceMode: 'onChange' 
     },
     { 
       id: 'sensitive', 
       label: 'Credit Card',
-      // Override: Store strictly in memory (cleared on refresh)
+      // Override Adapter: Store strictly in memory (cleared on refresh)
       persistenceAdapter: new MemoryAdapter() 
     }
   ]

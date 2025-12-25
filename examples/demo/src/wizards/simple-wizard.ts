@@ -13,5 +13,6 @@ export const {
   useWizardValue,
   useWizardSelector,
   useWizardError,
+  useWizardState,
   createStep,
 } = createWizardFactory<SimpleWizardSchema>();

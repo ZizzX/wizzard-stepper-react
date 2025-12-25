@@ -73,7 +73,7 @@ export default function HooksApi() {
               <pre className="space-y-1">
                 <div className="text-gray-500">// Subscribe to specific data slice</div>
                 <div>
-                  <span className="text-purple-400">const</span> <span className="text-indigo-300">name</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-400">'profile.base.name'</span><span className="text-emerald-400">);</span>
+                  <span className="text-purple-400">const</span> <span className="text-indigo-300">name</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardValue</span><span className="text-emerald-400">(</span><span className="text-amber-400">'user.name'</span><span className="text-emerald-400">, {"{ "}</span><span className="text-indigo-400">isEqual</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">shallowEqual</span><span className="text-emerald-400"> {"}"}</span><span className="text-emerald-400">);</span>
                 </div>
                 <div className="text-gray-500">// Type-safe return based on schema path</div>
               </pre>
@@ -91,9 +91,18 @@ export default function HooksApi() {
               <pre className="space-y-1">
                 <div className="text-gray-500">// Derive and transform data</div>
                 <div>
-                  <span className="text-purple-400">const</span> <span className="text-indigo-300">total</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardSelector</span><span className="text-emerald-400">(</span><span className="text-indigo-300">s</span> <span className="text-emerald-400">=&gt;</span> <span className="text-indigo-300">s</span><span className="text-emerald-400">.</span><span className="text-indigo-300">items</span><span className="text-emerald-400">.</span><span className="text-indigo-300">length</span><span className="text-emerald-400">);</span>
+                  <span className="text-purple-400">const</span> <span className="text-indigo-300">ids</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardSelector</span><span className="text-emerald-400">(</span>
                 </div>
-                <div className="text-gray-500">// Smart memoization under the hood</div>
+                <div className="pl-4">
+                  <span className="text-indigo-300">s</span> <span className="text-emerald-400">=&gt;</span> <span className="text-indigo-300">s</span><span className="text-emerald-400">.</span><span className="text-indigo-300">items</span><span className="text-emerald-400">.</span><span className="text-blue-400">map</span><span className="text-emerald-400">(</span><span className="text-indigo-300">i</span> <span className="text-emerald-400">=&gt;</span> <span className="text-indigo-300">i</span><span className="text-emerald-400">.</span><span className="text-indigo-300">id</span><span className="text-emerald-400">),</span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-emerald-400">{"{ "}</span><span className="text-indigo-400">isEqual</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">shallowEqual</span><span className="text-emerald-400"> {"}"}</span>
+                </div>
+                <div>
+                  <span className="text-emerald-400">);</span>
+                </div>
+                <div className="text-gray-500 pt-2">// Custom equality prevents re-renders on new array instances</div>
               </pre>
             </div>
           </div>

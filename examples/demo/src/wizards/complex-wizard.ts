@@ -22,10 +22,10 @@ export type Child = ComplexFormData["children"][0];
 // This gives us hooks strictly typed to FormData
 export const {
   WizardProvider,
-  useWizard,
   useWizardValue,
   useWizardActions,
   useWizardError,
   useWizardSelector,
+  useWizardState,
   createStep,
 } = createWizardFactory<ComplexFormData>();

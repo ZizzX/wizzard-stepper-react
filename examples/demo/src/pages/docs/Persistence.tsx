@@ -72,9 +72,14 @@ export default function Persistence() {
             <div className="pl-4"><span className="text-indigo-400">steps</span><span className="text-emerald-400">: [</span></div>
             <div className="pl-8 text-emerald-400">{"{"}</div>
             <div className="pl-12"><span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'billing'</span><span className="text-emerald-400">,</span></div>
-            <div className="pl-12 text-gray-500">// Override for this step only!</div>
+            <div className="pl-12 text-gray-500">// Override Adapter: Memory only</div>
             <div className="pl-12"><span className="text-indigo-400">persistenceAdapter</span><span className="text-emerald-400">:</span> <span className="text-purple-400">new</span> <span className="text-blue-400">MemoryAdapter</span><span className="text-emerald-400">()</span></div>
             <div className="pl-8 text-emerald-400">{" },"}</div>
+            <div className="pl-8 text-emerald-400">{"{"}</div>
+            <div className="pl-12"><span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'draft-step'</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-12 text-gray-500">// Override Mode: Save on every keystroke</div>
+            <div className="pl-12"><span className="text-indigo-400">persistenceMode</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'onChange'</span></div>
+            <div className="pl-8 text-emerald-400">{" }"}</div>
             <div className="pl-4 text-emerald-400">]</div>
             <div className="text-emerald-400">{"}"}</div>
           </pre>

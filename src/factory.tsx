@@ -64,9 +64,10 @@ export function createWizardFactory<TSchema extends Record<string, any>, StepId 
    * @param path Dot-notation path to the value
    */
   const useWizardValue = <P extends Path<TSchema>>(
-    path: P
+    path: P,
+    options?: { isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean }
   ): PathValue<TSchema, P> => {
-    return useBaseWizardValue<PathValue<TSchema, P>>(path);
+    return useBaseWizardValue<PathValue<TSchema, P>>(path, options);
   };
 
   /**
@@ -74,9 +75,10 @@ export function createWizardFactory<TSchema extends Record<string, any>, StepId 
    * @param selector Function to select a slice of state
    */
   const useWizardSelector = <TSelected,>(
-    selector: (state: TSchema) => TSelected
+    selector: (state: TSchema) => TSelected,
+    options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
   ): TSelected => {
-    return useBaseWizardSelector<TSelected>(selector);
+    return useBaseWizardSelector<TSelected>(selector, options);
   };
 
   /**

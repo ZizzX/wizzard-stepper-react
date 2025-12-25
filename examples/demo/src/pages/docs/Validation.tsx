@@ -138,14 +138,14 @@ export default function Validation() {
               </p>
            </div>
            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 text-emerald-600">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Hash Table Optimization
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 text-indigo-600">
+                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                Memoized Selectors
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Errors are stored internally in a <strong>Map (Hash Table)</strong>. This ensures that 
-                adding, removing, or clearing errors is always an <strong>O(1)</strong> operation, 
-                keeping the UI snappy even with hundreds of fields.
+                If a selector returns a new array or object (e.g., using <code className="text-xs">.map()</code>), 
+                use <code className="text-indigo-600 font-bold">shallowEqual</code> as the second argument 
+                to avoid unnecessary re-renders of the component.
               </p>
            </div>
         </div>
