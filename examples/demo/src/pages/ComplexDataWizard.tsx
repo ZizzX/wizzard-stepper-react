@@ -1,10 +1,19 @@
 import React, { useCallback } from "react";
 import type { IWizardConfig } from "wizzard-stepper-react";
-import { ZodAdapter, LocalStorageAdapter, shallowEqual } from "wizzard-stepper-react";
+import {
+  ZodAdapter,
+  LocalStorageAdapter,
+  shallowEqual,
+} from "wizzard-stepper-react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../components/ui/Card";
 import { DeferredList } from "../components/DeferredList";
 import {
   WizardProvider,
@@ -105,7 +114,7 @@ const Step2 = React.memo(() => {
   // Typed selector: state is correctly inferred as FormData
   const childIds = useWizardSelector(
     (state) => (state.children || []).map((c) => c.id),
-    { isEqual: shallowEqual } 
+    { isEqual: shallowEqual }
   );
   const childrenError = useWizardError("children");
 
@@ -122,27 +131,25 @@ const Step2 = React.memo(() => {
 
   const removeChild = useCallback(
     (id: string) => {
-      console.log("Removing child", id);
       const currentChildren = (getData("children") || []) as Child[];
       const newChildren = currentChildren.filter((c: Child) => c.id !== id);
       setData("children", newChildren);
     },
-    []
+    [setData, getData]
   );
-
-  console.log("step2 rendered");
 
   return (
     <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-gray-900">Children</h2>
-            <p className="text-gray-500 text-sm">
-                This step uses <strong>onStepChange</strong> validation. 
-                Errors appear only after clicking Next, but clear <em>immediately</em> when you type.
-            </p>
-          </div>
+      <div className="flex justify-between items-center">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold text-gray-900">Children</h2>
+          <p className="text-gray-500 text-sm">
+            This step uses <strong>onStepChange</strong> validation. Errors
+            appear only after clicking Next, but clear <em>immediately</em> when
+            you type.
+          </p>
         </div>
+      </div>
       <div className="space-y-4">
         <DeferredList
           items={childIds}
@@ -225,13 +232,15 @@ const WizardInner = () => {
     return (
       <div className="max-w-xl mx-auto py-8">
         <Card className="shadow-xl shadow-indigo-50/50 animate-pulse">
-           <CardHeader>
-              <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-              <div className="h-4 bg-gray-100 rounded w-1/2"></div>
-           </CardHeader>
-           <CardContent className="h-64 flex items-center justify-center">
-              <span className="text-gray-400 font-medium">Restoring your data...</span>
-           </CardContent>
+          <CardHeader>
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+          </CardHeader>
+          <CardContent className="h-64 flex items-center justify-center">
+            <span className="text-gray-400 font-medium">
+              Restoring your data...
+            </span>
+          </CardContent>
         </Card>
       </div>
     );
