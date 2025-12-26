@@ -3,15 +3,12 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState,
   useCallback,
   useSyncExternalStore,
   useRef,
-  useTransition,
 } from "react";
 import type {
   IWizardConfig,
-  PersistenceMode,
   IPersistenceAdapter,
   IStepConfig,
   IWizardContext,
@@ -19,7 +16,11 @@ import type {
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
 import { getByPath, setByPath } from "../utils/data";
 
-export interface IWizardState<T = unknown, StepId extends string = string> {
+export interface IWizardState<
+  T extends Record<string, any> = Record<string, any>,
+  StepId extends string = string,
+> {
+  currentStepId: StepId | "";
   currentStep: IStepConfig<unknown, T, StepId> | null;
   currentStepIndex: number;
   isFirstStep: boolean;
@@ -30,8 +31,19 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   visitedSteps: Set<StepId>;
   completedSteps: Set<StepId>;
   errorSteps: Set<StepId>;
-  store: WizardStore<T>;
+
+  // Data Access
+  data: T;
+  errors: Record<string, Record<string, string>>;
+
+  store: WizardStore<T, StepId>;
 }
+
+// Optimization: Exclude data/errors from main subscription
+export interface IWizardStructuralState<
+  T extends Record<string, any> = Record<string, any>,
+  StepId extends string = string,
+> extends Omit<IWizardState<T, StepId>, "data" | "errors"> {}
 
 export interface IWizardActions<StepId extends string = string> {
   goToNextStep: () => Promise<void>;
@@ -58,63 +70,181 @@ export interface IWizardActions<StepId extends string = string> {
   getData: (path: string, defaultValue?: unknown) => unknown;
 }
 
-const WizardStateContext = createContext<IWizardState<any, any> | undefined>(
-  undefined
-);
-const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
-  undefined
-);
+// Advanced: Store for granular subscriptions and state management
+export class WizardStore<
+  T extends Record<string, any>,
+  StepId extends string = string,
+> {
+  private internalState: {
+    data: T;
+    errors: Record<string, Record<string, string>>;
+    currentStepId: StepId | "";
+    visitedSteps: Set<StepId>;
+    completedSteps: Set<StepId>;
+    errorSteps: Set<StepId>;
+    isLoading: boolean;
+    isPending: boolean;
+  };
 
-// Advanced: Store for granular subscriptions
-export class WizardStore<T> {
-  private state: { data: T; errors: Record<string, Record<string, string>> };
+  private config: IWizardConfig<T, StepId>;
+  private stepsMap: Map<StepId, IStepConfig<any, T, StepId>>;
   private listeners = new Set<() => void>();
+
+  // Caches for derived state
+  private activeStepsCache: IStepConfig<any, T, StepId>[] = [];
+  private activeStepsIndexMapCache: Map<StepId, number> = new Map();
+
+  private snapshotCache: IWizardState<T, StepId> | null = null;
+  private structuralSnapshotCache: IWizardStructuralState<T, StepId> | null =
+    null;
+
+  // Error Map for O(1) ops
   errorsMap = new Map<string, Map<string, string>>();
 
-  constructor(initialData: T) {
-    this.state = {
+  constructor(config: IWizardConfig<T, StepId>, initialData: T) {
+    this.config = config;
+    this.stepsMap = new Map(config.steps.map((s) => [s.id, s]));
+
+    this.internalState = {
       data: initialData,
       errors: {},
+      currentStepId: "",
+      visitedSteps: new Set(),
+      completedSteps: new Set(),
+      errorSteps: new Set(),
+      isLoading: true,
+      isPending: false,
     };
+
+    // Initial calculation
+    this.recomputeActiveSteps();
+    this.updateSnapshot();
   }
 
-  getSnapshot() {
-    return this.state;
-  }
+  // --- Core State Updates ---
 
   update(newData: T) {
-    this.state = { ...this.state, data: newData };
+    if (this.internalState.data === newData) return;
+    this.internalState.data = newData;
+    this.recomputeActiveSteps(); // Data change might affect active steps
+    this.updateSnapshot();
     this.notify();
   }
 
-  // Sync internal Map to external Object (for backward compat)
-  private syncErrors() {
-    const newErrorsObj: Record<string, Record<string, string>> = {};
-    for (const [stepId, fieldErrors] of this.errorsMap.entries()) {
-      if (fieldErrors.size > 0) {
-        newErrorsObj[stepId] = Object.fromEntries(fieldErrors);
-      }
-    }
-    this.state = { ...this.state, errors: newErrorsObj };
-    this.notify();
-  }
-
-  // Update from Object (Legacy/State setter)
   updateErrors(newErrors: Record<string, Record<string, string>>) {
-    // Re-build Map to stay in sync
+    this.internalState.errors = newErrors;
+    // Sync map
     this.errorsMap.clear();
     for (const [stepId, fieldErrors] of Object.entries(newErrors)) {
       const stepMap = new Map<string, string>();
       for (const [field, msg] of Object.entries(fieldErrors)) {
         stepMap.set(field, msg);
       }
-      if (stepMap.size > 0) this.errorsMap.set(stepId, stepMap);
+      if (stepMap.size > 0) this.errorsMap.set(stepId as string, stepMap);
     }
-    this.state = { ...this.state, errors: newErrors };
+    this.updateSnapshot();
     this.notify();
   }
 
-  // Optimize: Update Step Errors directly (O(1) Map updated, then Sync)
+  // --- Helpers for Provider ---
+
+  batch(callback: () => void) {
+    callback();
+  }
+
+  getData(path: string, defaultValue?: any): any {
+    if (!path) return this.internalState.data;
+    return getByPath(this.internalState.data, path, defaultValue);
+  }
+
+  setData(path: string, value: any) {
+    const { data } = this.internalState;
+    const newData = setByPath(data, path, value);
+    this.update(newData);
+  }
+
+  updateData(data: Partial<T>, replace?: boolean) {
+    const { data: prevData } = this.internalState;
+    const newData = replace ? (data as T) : { ...prevData, ...data };
+    this.update(newData);
+  }
+
+  getErrors() {
+    return this.internalState.errors;
+  }
+
+  clearErrors() {
+    this.errorsMap.clear();
+    this.internalState.errors = {};
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  setState(partial: Partial<typeof this.internalState>) {
+    Object.assign(this.internalState, partial);
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  // --- Specific Setters (Optimization) ---
+
+  setCurrentStepId(id: StepId | "") {
+    if (this.internalState.currentStepId === id) return;
+    this.internalState.currentStepId = id;
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  setVisitedSteps(steps: Set<StepId>) {
+    this.internalState.visitedSteps = steps;
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  setCompletedSteps(steps: Set<StepId>) {
+    this.internalState.completedSteps = steps;
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  setErrorSteps(steps: Set<StepId>) {
+    this.internalState.errorSteps = steps;
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  setLoading(isLoading: boolean) {
+    if (this.internalState.isLoading === isLoading) return;
+    this.internalState.isLoading = isLoading;
+    this.updateSnapshot();
+    this.notify();
+  }
+
+  // --- Logic ---
+
+  private recomputeActiveSteps() {
+    const { data } = this.internalState;
+    const nextActiveSteps = this.config.steps.filter((step) => {
+      if (step.condition) {
+        return step.condition(data);
+      }
+      return true;
+    });
+
+    // Structural equality check to avoid needless updates
+    const prevIds = this.activeStepsCache.map((s) => s.id).join(".");
+    const nextIds = nextActiveSteps.map((s) => s.id).join(".");
+
+    if (prevIds !== nextIds || this.activeStepsCache.length === 0) {
+      this.activeStepsCache = nextActiveSteps;
+      this.activeStepsIndexMapCache.clear();
+      nextActiveSteps.forEach((s, i) =>
+        this.activeStepsIndexMapCache.set(s.id, i)
+      );
+    }
+  }
+
+  // Update Step Errors directly (O(1))
   setStepErrors(
     stepId: string,
     errors: Record<string, string> | undefined | null
@@ -123,18 +253,16 @@ export class WizardStore<T> {
       if (this.errorsMap.has(stepId)) {
         this.errorsMap.delete(stepId);
         this.syncErrors();
-        return true; // changed
+        return true;
       }
       return false;
     }
 
-    // Update Map
     const stepMap = new Map<string, string>();
     for (const [field, msg] of Object.entries(errors)) {
       stepMap.set(field, msg);
     }
     this.errorsMap.set(stepId, stepMap);
-
     this.syncErrors();
     return true;
   }
@@ -149,11 +277,22 @@ export class WizardStore<T> {
       if (stepErrors.size === 0) {
         this.errorsMap.delete(stepId);
       }
-      // Sync to object for public state
       this.syncErrors();
       return true;
     }
     return false;
+  }
+
+  private syncErrors() {
+    const newErrorsObj: Record<string, Record<string, string>> = {};
+    for (const [stepId, fieldErrors] of this.errorsMap.entries()) {
+      if (fieldErrors.size > 0) {
+        newErrorsObj[stepId] = Object.fromEntries(fieldErrors);
+      }
+    }
+    this.internalState.errors = newErrorsObj;
+    this.updateSnapshot();
+    this.notify();
   }
 
   private notify() {
@@ -164,12 +303,117 @@ export class WizardStore<T> {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
+
+  getSnapshot = () => {
+    // Must be stable if nothing changed
+    return this.snapshotCache!;
+  };
+
+  getStructuralSnapshot = () => {
+    return this.structuralSnapshotCache!;
+  };
+
+  // Public Getters Helpers
+  get activeSteps() {
+    return this.activeStepsCache;
+  }
+  get stepsMapRef() {
+    return this.stepsMap;
+  }
+  get activeStepsIndexMap() {
+    return this.activeStepsIndexMapCache;
+  }
+
+  private updateSnapshot() {
+    const {
+      currentStepId,
+      data,
+      errors,
+      isLoading,
+      isPending,
+      visitedSteps,
+      completedSteps,
+      errorSteps,
+    } = this.internalState;
+
+    const currentStep = currentStepId
+      ? this.stepsMap.get(currentStepId) || null
+      : null;
+    const currentStepIndex = currentStepId
+      ? (this.activeStepsIndexMapCache.get(currentStepId) ?? -1)
+      : -1;
+
+    this.snapshotCache = {
+      currentStepId: (currentStepId || "") as StepId | "",
+      currentStep,
+      currentStepIndex,
+      isFirstStep: currentStepIndex === 0,
+      isLastStep: currentStepIndex === this.activeStepsCache.length - 1,
+      isLoading,
+      isPending,
+      activeSteps: this.activeStepsCache,
+      visitedSteps,
+      completedSteps,
+      errorSteps,
+      data,
+      errors,
+      store: this as any,
+    };
+
+    // Optimization: Structural Snapshot (Reference Stable if structure matches)
+    // We only create a new object if one of the structural fields changed.
+    const newStructure: IWizardStructuralState<T, StepId> = {
+      currentStepId: (currentStepId || "") as StepId | "",
+      currentStep,
+      currentStepIndex,
+      isFirstStep: currentStepIndex === 0,
+      isLastStep: currentStepIndex === this.activeStepsCache.length - 1,
+      isLoading,
+      isPending,
+      activeSteps: this.activeStepsCache,
+      visitedSteps,
+      completedSteps,
+      errorSteps,
+      store: this as any,
+    };
+
+    if (
+      !this.structuralSnapshotCache ||
+      !this.isStructuralEqual(this.structuralSnapshotCache, newStructure)
+    ) {
+      this.structuralSnapshotCache = newStructure;
+    }
+  }
+
+  private isStructuralEqual(
+    a: IWizardStructuralState<T, StepId>,
+    b: IWizardStructuralState<T, StepId>
+  ) {
+    return (
+      a.currentStepId === b.currentStepId &&
+      a.isLoading === b.isLoading &&
+      a.isPending === b.isPending &&
+      a.activeSteps === b.activeSteps &&
+      a.visitedSteps === b.visitedSteps &&
+      a.completedSteps === b.completedSteps &&
+      a.errorSteps === b.errorSteps
+    );
+  }
 }
+
+const WizardStateContext = createContext<WizardStore<any, any> | undefined>(
+  undefined
+);
+const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
+  undefined
+);
+
+// --- Provider ---
 
 interface WizardProviderProps<T, StepId extends string> {
   config: IWizardConfig<T, StepId>;
   initialData?: T;
-  initialStepId?: StepId; // New: Start from any step
+  initialStepId?: StepId;
   children: React.ReactNode;
 }
 
@@ -182,24 +426,18 @@ export function WizardProvider<
   initialStepId,
   children,
 }: WizardProviderProps<T, StepId>) {
-  const [currentStepId, setCurrentStepId] = useState<StepId | "">("");
-  // Optimize: Keep ref to currentStepId to avoid recreating setData on every step change
-  const currentStepIdRef = useRef<StepId | "">(currentStepId);
-  useEffect(() => {
-    currentStepIdRef.current = currentStepId;
-  }, [currentStepId]);
+  // Store initialization (stable)
+  const storeRef = useRef<WizardStore<T, StepId>>(null as any);
+  if (!storeRef.current) {
+    storeRef.current = new WizardStore<T, StepId>(
+      config,
+      (initialData || {}) as T
+    );
+  }
+  const store = storeRef.current;
 
-  const [visitedSteps, setVisitedSteps] = useState<Set<StepId>>(new Set());
-  const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
-  const [errorSteps, setErrorSteps] = useState<Set<StepId>>(new Set());
-  const [, setAllErrorsState] = useState<
-    Record<string, Record<string, string>>
-  >({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isPending, startTransition] = useTransition();
-
-  // Store for granular data and errors
-  const storeRef = useRef(new WizardStore<T>((initialData || {}) as T));
+  // Reactivity: Subscribe to the store
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
 
   // Persistence Setup
   const persistenceAdapter = useMemo<IPersistenceAdapter>(() => {
@@ -208,120 +446,26 @@ export function WizardProvider<
 
   const persistenceMode = config.persistence?.mode || "onStepChange";
 
-  // --- Optimization: Static Step Map ---
-  const stepsMap = useMemo(() => {
-    const map = new Map<StepId, IStepConfig<any, T, StepId>>();
-    config.steps.forEach((step: IStepConfig<any, T, StepId>) =>
-      map.set(step.id, step)
-    );
-    return map;
-  }, [config.steps]);
-
-  // We use a ref to track the last calculated steps to ensure referential strictness
-  const lastActiveStepsRef = useRef<IStepConfig<any, T, StepId>[]>([]);
-
-  // Optimized: Calculate Active Steps reactively from the store
-  const activeSteps = useSyncExternalStore(
-    storeRef.current.subscribe,
-    useCallback(() => {
-      const currentData = storeRef.current.getSnapshot().data;
-      const nextActiveSteps = config.steps.filter(
-        (step: IStepConfig<any, T, StepId>) => {
-          if (step.condition) {
-            return step.condition(currentData);
-          }
-          return true;
-        }
-      );
-
-      // Check if structure changed (ids match) - shallow check optimized for step stability
-      const prevIds = lastActiveStepsRef.current.map((s) => s.id).join(".");
-      const nextIds = nextActiveSteps.map((s) => s.id).join(".");
-
-      if (prevIds === nextIds && lastActiveStepsRef.current.length > 0) {
-        return lastActiveStepsRef.current;
-      }
-
-      lastActiveStepsRef.current = nextActiveSteps;
-      return nextActiveSteps;
-    }, [config.steps])
-  );
-
-  const activeStepsIndexMap = useMemo(() => {
-    const map = new Map<StepId, number>();
-    activeSteps.forEach((s: IStepConfig<any, T, StepId>, i: number) =>
-      map.set(s.id, i)
-    );
-    return map;
-  }, [activeSteps]);
-
-  // Set initial step if not set (with optional initialStepId)
-  useEffect(() => {
-    if (!currentStepId && activeSteps.length > 0) {
-      if (initialStepId) {
-        // Validation: verify initialStepId exists in active steps
-        const target = activeSteps.find(
-          (s: IStepConfig<any, T, StepId>) => s.id === initialStepId
-        );
-        if (target) {
-          setCurrentStepId(target.id);
-        } else {
-          // Fallback if initial is invalid/hidden
-          setCurrentStepId(activeSteps[0].id);
-        }
-      } else {
-        setCurrentStepId(activeSteps[0].id);
-      }
-      setIsLoading(false);
-    }
-  }, [activeSteps, currentStepId, initialStepId]);
-
-  // --- Optimization: Stable State Reference ---
-  // We hold all "changing" values in a ref so actions can remain stable
+  // State Refs for Actions (to avoid re-creating functions)
+  // We use a ref to access the *latest* state inside actions without closure staleness
   const stateRef = useRef({
     config,
-    stepsMap,
-    activeSteps,
-    activeStepsIndexMap,
-    visitedSteps,
-    completedSteps,
     persistenceMode,
     persistenceAdapter,
-    currentStepId,
+    state, // continuously updated
   });
 
-  // Update ref on every render - this is fast
-  stateRef.current = {
-    config,
-    stepsMap,
-    activeSteps,
-    activeStepsIndexMap,
-    visitedSteps,
-    completedSteps,
-    persistenceMode,
-    persistenceAdapter,
-    currentStepId,
-  };
-
-  // Derived state
-  const currentStep = useMemo(
-    () => stepsMap.get(currentStepId as StepId) || null,
-    [stepsMap, currentStepId]
-  );
-  const currentStepIndex = useMemo(
-    () => activeStepsIndexMap.get(currentStepId as StepId) ?? -1,
-    [activeStepsIndexMap, currentStepId]
-  );
-  const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === activeSteps.length - 1;
+  useEffect(() => {
+    // Sync ref
+    stateRef.current = { config, persistenceMode, persistenceAdapter, state };
+  });
 
   // Constants
   const META_KEY = "__wizzard_meta__";
 
   // Hydration Helper
-  // Hydration Helper
   const hydrate = useCallback(() => {
-    setIsLoading(true);
+    store.setLoading(true);
     const { persistenceAdapter, config } = stateRef.current;
 
     const metaFn = persistenceAdapter.getStep<{
@@ -332,10 +476,11 @@ export function WizardProvider<
 
     if (metaFn) {
       if (metaFn.currentStepId)
-        setCurrentStepId(metaFn.currentStepId as StepId);
-      if (metaFn.visited) setVisitedSteps(new Set(metaFn.visited as StepId[]));
+        store.setCurrentStepId(metaFn.currentStepId as StepId);
+      if (metaFn.visited)
+        store.setVisitedSteps(new Set(metaFn.visited as StepId[]));
       if (metaFn.completed)
-        setCompletedSteps(new Set(metaFn.completed as StepId[]));
+        store.setCompletedSteps(new Set(metaFn.completed as StepId[]));
     }
 
     const loadedData: Partial<T> = {};
@@ -347,414 +492,210 @@ export function WizardProvider<
     });
 
     if (Object.keys(loadedData).length > 0) {
-      const currentData = storeRef.current.getSnapshot().data;
-      const newData = { ...currentData, ...loadedData };
-      storeRef.current.update(newData);
+      store.updateData(loadedData);
     }
-    setIsLoading(false);
-  }, []); // Empty dependency array!
+    store.setLoading(false);
+  }, [store]);
 
+  // Initial Step Logic
+  useEffect(() => {
+    const { currentStepId, activeSteps } = store.getSnapshot();
+    if (!currentStepId && activeSteps.length > 0) {
+      let targetId: StepId | undefined;
+      if (initialStepId) {
+        const target = activeSteps.find((s) => s.id === initialStepId);
+        if (target) targetId = target.id;
+      }
+      if (!targetId) targetId = activeSteps[0].id;
+
+      store.setCurrentStepId(targetId!);
+      store.setLoading(false);
+    } else {
+      if (store.getSnapshot().isLoading) store.setLoading(false);
+    }
+  }, [store, initialStepId]);
+
+  // Hydration Effect
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
-  // Save logic stabilized
-  const saveData = useCallback(
-    (mode: PersistenceMode, stepId: StepId, data: any) => {
-      const {
-        stepsMap,
-        persistenceAdapter,
-        persistenceMode: globalMode,
-      } = stateRef.current;
-      const stepConfig = stepsMap.get(stepId);
-      const stepAdapter = stepConfig?.persistenceAdapter;
-      const stepMode = stepConfig?.persistenceMode;
-      const adapterToUse = stepAdapter || persistenceAdapter;
-      const modeToUse = stepMode || globalMode;
+  // Save logic
+  const save = useCallback(
+    (stepIds?: StepId | StepId[] | boolean) => {
+      const { persistenceAdapter, config } = stateRef.current;
+      const { data, currentStepId, visitedSteps, completedSteps } =
+        store.getSnapshot();
 
-      if (mode === modeToUse || mode === "manual") {
-        adapterToUse.saveStep(stepId, data);
-      }
+      // Save Meta
+      persistenceAdapter.saveStep(META_KEY, {
+        currentStepId,
+        visited: Array.from(visitedSteps),
+        completed: Array.from(completedSteps),
+      });
+
+      // Determine targets
+      let targets: string[] = [];
+      if (Array.isArray(stepIds)) targets = stepIds as string[];
+      else if (typeof stepIds === "string") targets = [stepIds];
+      else if (stepIds === true) targets = config.steps.map((s) => s.id);
+      else if (currentStepId) targets = [currentStepId];
+
+      // Write
+      targets.forEach((id) => {
+        if (id) persistenceAdapter.saveStep(id, data);
+      });
     },
-    []
+    [store]
   );
 
-  // Debounce timeout for validation
-  const validationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  // Persistence Effect (onChange)
+  useEffect(() => {
+    const { persistenceMode } = stateRef.current;
+    if (persistenceMode === "onChange") {
+      const timer = setTimeout(() => {
+        save(true); // Save all steps on data change
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [state.data, save]);
 
+  const clearStorage = useCallback(() => store.clearErrors(), [store]);
+
+  // Validation
   const validateStep = useCallback(
     async (stepId: StepId, data: T): Promise<boolean> => {
-      const { stepsMap } = stateRef.current;
-      const step = stepsMap.get(stepId);
-      if (!step || !step.validationAdapter) {
-        return true;
-      }
+      const { config } = stateRef.current;
+      const step = config.steps.find((s) => s.id === stepId);
+      if (!step || !step.validationAdapter) return true;
 
       const result = await step.validationAdapter.validate(data);
 
-      if (result.isValid) {
-        // Clear errors for this step
-        // Optimized: Use Store Method
-        const changed = storeRef.current.setStepErrors(stepId, null);
+      store.setStepErrors(stepId, result.isValid ? null : result.errors);
 
-        if (changed) {
-          setAllErrorsState(storeRef.current.getSnapshot().errors);
-          setErrorSteps((prev) => {
-            const next = new Set(prev);
-            next.delete(stepId);
-            return next;
-          });
-        }
-        return true;
-      } else {
-        // Set errors for this step
-        // Optimized: Use Store Method
-        storeRef.current.setStepErrors(stepId, result.errors || null);
-        setAllErrorsState(storeRef.current.getSnapshot().errors);
+      const { errorSteps } = store.getSnapshot();
+      const nextErrorSteps = new Set(errorSteps);
+      if (result.isValid) nextErrorSteps.delete(stepId);
+      else nextErrorSteps.add(stepId);
 
-        setErrorSteps((prev) => {
-          const next = new Set(prev);
-          next.add(stepId);
-          return next;
-        });
-        return false;
-      }
+      store.setErrorSteps(nextErrorSteps);
+
+      return result.isValid;
     },
-    []
-  );
-
-  // Actions stabilized with useCallback
-  const setStepData = useCallback(
-    (stepId: StepId, data: any) => {
-      const { persistenceMode } = stateRef.current;
-      const prevData = storeRef.current.getSnapshot().data;
-      const newData = { ...prevData, ...data };
-
-      storeRef.current.update(newData);
-
-      const stepConfig = stateRef.current.stepsMap.get(stepId as StepId);
-      const effectiveMode = stepConfig?.persistenceMode || persistenceMode;
-
-      if (effectiveMode === "onChange") {
-        saveData("onChange", stepId, newData);
-      }
-    },
-    [saveData]
+    [store]
   );
 
   const setData = useCallback(
-    (path: string, value: any, options?: { debounceValidation?: number }) => {
-      const { persistenceMode, stepsMap } = stateRef.current;
-      const prevData = storeRef.current.getSnapshot().data;
-
-      const currentValue = getByPath(prevData, path);
-      if (currentValue === value) return;
-
-      const newData = setByPath(prevData, path, value);
-
-      // --- Batching Strategy: Update Store First ---
-      storeRef.current.update(newData);
-
-      const activeStepId = stateRef.current.currentStepId;
-      const stepConfig = stepsMap.get(activeStepId as StepId);
-
-      // 4. Clear Error on Input (UX Improvement + Optimization)
-      if (activeStepId) {
-        const wasDeleted = storeRef.current.deleteError(activeStepId, path);
-        if (wasDeleted) {
-          // Check if step is now clean to update errorSteps
-          if (!storeRef.current.errorsMap.has(activeStepId)) {
-            setErrorSteps((prev) => {
-              const next = new Set(prev);
-              next.delete(activeStepId);
-              return next;
-            });
-          }
-        }
-      }
-
-      // Sync React state last - only for errors to update errorSteps
-      if (activeStepId && storeRef.current.getSnapshot().errors[activeStepId]) {
-        startTransition(() => {
-          setAllErrorsState(storeRef.current.getSnapshot().errors);
-        });
-      }
-
-      // Determine Validation Mode
-      const { config } = stateRef.current;
-      const mode =
-        stepConfig?.validationMode ?? config.validationMode ?? "onStepChange";
-
-      // 3. Conditional Validation Logic
-      if (mode === "onChange") {
-        if (options?.debounceValidation) {
-          if (validationTimeoutRef.current)
-            clearTimeout(validationTimeoutRef.current);
-          validationTimeoutRef.current = setTimeout(() => {
-            try {
-              if (activeStepId) {
-                validateStep(activeStepId as StepId, newData).catch((err) => {
-                  console.error("[Wizard] Debounced validation failed:", err);
-                });
-              }
-            } catch (e) {
-              console.error("[Wizard] Error starting validation:", e);
-            }
-          }, options.debounceValidation);
-        } else {
-          if (activeStepId) validateStep(activeStepId as StepId, newData);
-        }
-      }
-
-      const effectivePersistenceMode =
-        stepConfig?.persistenceMode ?? persistenceMode;
-      if (effectivePersistenceMode === "onChange" && activeStepId) {
-        saveData("onChange", activeStepId as StepId, newData);
-      }
+    (path: string, value: any, _options?: { debounceValidation?: number }) => {
+      store.setData(path, value);
     },
-    [saveData, validateStep]
+    [store]
   );
 
   const updateData = useCallback(
-    (data: Partial<T>, options?: { replace?: boolean; persist?: boolean }) => {
-      const { config } = stateRef.current;
-      const prevData = storeRef.current.getSnapshot().data;
-      const newData = options?.replace ? (data as T) : { ...prevData, ...data };
-
-      storeRef.current.update(newData);
-
-      if (options?.persist) {
-        config.steps.forEach((step) => {
-          saveData("manual", step.id, newData);
-        });
-      }
+    (data: Partial<T>, options?: any) => {
+      store.updateData(data, options?.replace);
     },
-    [saveData]
+    [store]
   );
 
-  const getData = useCallback((path: string, defaultValue?: any) => {
-    return getByPath(storeRef.current.getSnapshot().data, path, defaultValue);
-  }, []);
+  const getData = useCallback(
+    (path: string, def?: any) => {
+      return store.getData(path, def);
+    },
+    [store]
+  );
 
-  // Action: Handle specific field change (helper)
   const handleStepChange = useCallback(
     (field: string, value: any) => {
-      const { currentStepId } = stateRef.current;
-      if (!currentStepId) return;
-      setData(field, value);
+      store.setData(field, value);
     },
-    [setData]
+    [store]
   );
 
-  const validateAll = useCallback(async (): Promise<{
-    isValid: boolean;
-    errors: Record<string, Record<string, string>>;
-  }> => {
-    const { activeSteps } = stateRef.current;
+  const validateAll = useCallback(async () => {
+    const { activeSteps } = store.getSnapshot();
+    const data = store.getData("");
 
-    // Optimization: Parallel validation
-    const currentData = storeRef.current.getSnapshot().data;
-    const validationResults = await Promise.all(
-      activeSteps.map((step: IStepConfig<any, T, StepId>) =>
-        validateStep(step.id, currentData)
-      )
+    const results = await Promise.all(
+      activeSteps.map((s) => validateStep(s.id, data as T))
     );
-
-    const isValid = validationResults.every(Boolean);
-    const finalErrors = storeRef.current.getSnapshot().errors;
-    return { isValid, errors: finalErrors };
-  }, [validateStep]);
+    const isValid = results.every(Boolean);
+    return { isValid, errors: store.getErrors() };
+  }, [store, validateStep]);
 
   const goToStep = useCallback(
     async (stepId: StepId): Promise<boolean> => {
-      const {
-        activeStepsIndexMap,
-        currentStepId,
-        config,
-        persistenceMode,
-        visitedSteps,
-        completedSteps,
-        persistenceAdapter,
-        stepsMap,
-      } = stateRef.current;
+      const { state: snapshot, config } = stateRef.current;
+      const { currentStepId, visitedSteps } = snapshot as any;
+      const { activeStepsIndexMap } = store;
+
+      if (!currentStepId) return false;
 
       const targetIndex = activeStepsIndexMap.get(stepId) ?? -1;
+      const currentIndex = activeStepsIndexMap.get(currentStepId) ?? -1;
+
       if (targetIndex === -1) return false;
 
-      const currentData = storeRef.current.getSnapshot().data;
-      const currentStepIndex =
-        activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
-      const currentStep = stepsMap.get(currentStepId as StepId);
+      const currentData = store.getData("") as T;
 
-      if (targetIndex > currentStepIndex) {
+      if (targetIndex > currentIndex) {
+        const currentStep = config.steps.find((s) => s.id === currentStepId);
         const shouldValidate =
           currentStep?.autoValidate ?? config.autoValidate ?? false;
         const mode =
-          currentStep?.validationMode ??
-          config.validationMode ??
+          currentStep?.validationMode ||
+          config.validationMode ||
           "onStepChange";
 
-        if ((shouldValidate || mode === "onStepChange") && currentStepId) {
-          const isValid = await validateStep(
-            currentStepId as StepId,
-            currentData
-          );
+        if (shouldValidate || mode === "onStepChange") {
+          const isValid = await validateStep(currentStepId, currentData);
           if (!isValid) return false;
         }
       }
 
-      if (currentStep && currentStepId) {
-        const effectivePersistenceMode =
-          currentStep.persistenceMode ?? persistenceMode;
-        if (effectivePersistenceMode === "onStepChange") {
-          saveData("onStepChange", currentStepId as StepId, currentData);
-        }
+      const nextVisited = new Set<StepId>(visitedSteps as Set<StepId>);
+      nextVisited.add(currentStepId);
+
+      // Persistence onStepChange
+      const { persistenceMode } = stateRef.current;
+      if (persistenceMode === "onStepChange") {
+        save(currentStepId);
       }
 
-      const nextVisited = new Set(visitedSteps);
-      if (currentStepId) nextVisited.add(currentStepId as StepId);
-
-      setVisitedSteps(nextVisited);
-      setCurrentStepId(stepId);
-
-      if (persistenceMode !== "manual") {
-        persistenceAdapter.saveStep(META_KEY, {
-          currentStepId: stepId,
-          visited: Array.from(nextVisited),
-          completed: Array.from(completedSteps),
-        });
-      }
-
-      // Lifecycle Callback
-      if (config.onStepChange) {
-        config.onStepChange(currentStepId || null, stepId, currentData); // Call hook
-      }
+      store.batch(() => {
+        store.setVisitedSteps(nextVisited);
+        store.setCurrentStepId(stepId);
+      });
 
       window.scrollTo(0, 0);
       return true;
     },
-    [saveData, validateStep]
+    [store, validateStep]
   );
 
   const goToNextStep = useCallback(async () => {
-    const {
-      activeSteps,
-      activeStepsIndexMap,
-      currentStepId,
-      completedSteps,
-      persistenceMode,
-    } = stateRef.current;
-    const currentStepIndex =
-      activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
-
-    if (currentStepIndex === -1 || currentStepIndex === activeSteps.length - 1)
-      return;
-
-    const nextStep = activeSteps[currentStepIndex + 1];
-    if (nextStep) {
-      const success = await goToStep(nextStep.id);
-      if (success) {
-        const nextCompleted = new Set(completedSteps).add(
-          currentStepId as StepId
-        );
-        setCompletedSteps(nextCompleted);
-
-        if (persistenceMode !== "manual") {
-          persistenceAdapter.saveStep(META_KEY, {
-            currentStepId: nextStep.id,
-            visited: Array.from(
-              new Set(visitedSteps).add(currentStepId as StepId)
-            ),
-            completed: Array.from(nextCompleted),
-          });
-        }
-      }
-    }
-  }, [goToStep]); // Only depends on goToStep (which is stable)
+    const { activeSteps, currentStepIndex } = store.getSnapshot();
+    if (currentStepIndex >= activeSteps.length - 1) return;
+    const next = activeSteps[currentStepIndex + 1];
+    if (next) await goToStep(next.id);
+  }, [goToStep, store]);
 
   const goToPrevStep = useCallback(() => {
-    const { activeSteps, activeStepsIndexMap, currentStepId } =
-      stateRef.current;
-    const currentStepIndex =
-      activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
+    const { activeSteps, currentStepIndex } = store.getSnapshot();
     if (currentStepIndex <= 0) return;
-    const prevStep = activeSteps[currentStepIndex - 1];
-    if (prevStep) {
-      goToStep(prevStep.id);
-    }
-  }, [goToStep]);
+    const prev = activeSteps[currentStepIndex - 1];
+    if (prev) goToStep(prev.id);
+  }, [goToStep, store]);
 
-  const clearStorage = useCallback(() => {
-    stateRef.current.persistenceAdapter.clear();
-  }, []);
-
-  const save = useCallback(
-    (stepIds?: StepId | StepId[] | boolean) => {
-      const { config, currentStepId } = stateRef.current;
-      const data = storeRef.current.getSnapshot().data;
-
-      if (stepIds === true) {
-        config.steps.forEach((step) => {
-          saveData("manual", step.id, data);
-        });
-        return;
-      }
-
-      if (!stepIds) {
-        if (currentStepId) {
-          saveData("manual", currentStepId as StepId, data);
-        }
-        return;
-      }
-
-      const ids = Array.isArray(stepIds) ? stepIds : [stepIds];
-      ids.forEach((id) => {
-        saveData("manual", id, data);
-      });
-    },
-    [saveData]
-  );
-
-  // Split values
-  const stateValue = useMemo<IWizardState<T, StepId>>(
-    () => ({
-      currentStep,
-      currentStepIndex,
-      isFirstStep,
-      isLastStep,
-      isLoading,
-      isPending,
-      activeSteps,
-      visitedSteps,
-      completedSteps,
-      errorSteps,
-      store: storeRef.current,
-    }),
-    [
-      currentStep,
-      currentStepIndex,
-      isFirstStep,
-      isLastStep,
-      isLoading,
-      isPending,
-      activeSteps,
-      visitedSteps,
-      completedSteps,
-      errorSteps,
-    ]
-  );
-
-  const actionsValue = useMemo<IWizardActions<StepId>>(
+  const actionsValue = useMemo(
     () => ({
       goToNextStep,
       goToPrevStep,
       goToStep,
-      setStepData: setStepData as (stepId: StepId, data: unknown) => void,
+      setStepData: (_id: any, _d: any) => {},
       handleStepChange,
-      validateStep: (sid: StepId) =>
-        validateStep(sid, storeRef.current.getSnapshot().data),
+      validateStep,
       validateAll,
       save,
       clearStorage,
@@ -766,7 +707,6 @@ export function WizardProvider<
       goToNextStep,
       goToPrevStep,
       goToStep,
-      setStepData,
       handleStepChange,
       validateStep,
       validateAll,
@@ -779,30 +719,47 @@ export function WizardProvider<
   );
 
   return (
-    <WizardStateContext.Provider value={stateValue}>
-      <WizardActionsContext.Provider value={actionsValue}>
+    <WizardStateContext.Provider value={store as any}>
+      <WizardActionsContext.Provider value={actionsValue as any}>
         {children}
       </WizardActionsContext.Provider>
     </WizardStateContext.Provider>
   );
 }
 
-export function useWizardState<
-  T = unknown,
+function useWizardStore<
+  T extends Record<string, any> = Record<string, any>,
   StepId extends string = string,
->(): IWizardState<T, StepId> {
-  const context = useContext(WizardStateContext);
-  if (!context) {
+>() {
+  const store = useContext(WizardStateContext);
+  if (!store) {
     throw new Error("useWizardState must be used within a WizardProvider");
   }
-  return context as IWizardState<T, StepId>;
+  return store as unknown as WizardStore<T, StepId>;
+}
+
+export function useWizardState<
+  T extends Record<string, any> = Record<string, any>,
+  StepId extends string = string,
+>(): IWizardState<T, StepId> {
+  const store = useWizardStore<T, StepId>();
+  // Use structural snapshot to prevent re-renders on data change
+  const structuralState = useSyncExternalStore(
+    store.subscribe,
+    store.getStructuralSnapshot
+  );
+
+  // We cast back to IWizardState mostly for compatibility,
+  // but consumers should prefer useWizardValue for data.
+  // This effectively hides 'data' from triggering re-renders here.
+  return structuralState as unknown as IWizardState<T, StepId>;
 }
 
 export function useWizardValue<TValue = any>(
   path: string,
   options?: { isEqual?: (a: TValue, b: TValue) => boolean }
 ): TValue {
-  const { store } = useWizardState();
+  const store = useWizardStore();
   const lastStateRef = useRef<any>(null);
   const lastValueRef = useRef<any>(null);
   const isEqual = options?.isEqual || Object.is;
@@ -815,7 +772,6 @@ export function useWizardValue<TValue = any>(
     }
     const value = getByPath(data, path) as TValue;
 
-    // Memoization with custom equality
     if (
       lastValueRef.current !== undefined &&
       isEqual(lastValueRef.current, value)
@@ -833,7 +789,7 @@ export function useWizardValue<TValue = any>(
 }
 
 export function useWizardError(path: string): string | undefined {
-  const { store } = useWizardState();
+  const store = useWizardStore();
   const lastStateRef = useRef<any>(null);
   const lastValueRef = useRef<any>(null);
 
@@ -844,9 +800,6 @@ export function useWizardError(path: string): string | undefined {
       return lastValueRef.current;
     }
 
-    // Flatten errors from all steps or use a specific step?
-    // Usually validation results are nested like { children: { "0.name": "error" } }
-    // but the adapter flattened them to "children.0.name"
     let foundError: string | undefined;
     Object.values(errors).forEach((stepErrors) => {
       const typedStepErrors = stepErrors as Record<string, string>;
@@ -865,7 +818,7 @@ export function useWizardSelector<TSelected = any>(
   selector: (state: any) => TSelected,
   options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
 ): TSelected {
-  const { store } = useWizardState();
+  const store = useWizardStore();
   const lastStateRef = useRef<any>(null);
   const lastResultRef = useRef<any>(null);
   const isEqual = options?.isEqual || Object.is;
@@ -878,7 +831,6 @@ export function useWizardSelector<TSelected = any>(
 
     const result = selector(fullState.data);
 
-    // Memoization with custom equality
     if (
       lastResultRef.current !== null &&
       isEqual(lastResultRef.current, result)
@@ -906,15 +858,14 @@ export function useWizardActions<
 }
 
 export function useWizardContext<
-  T = any,
+  T extends Record<string, any> = Record<string, any>,
   StepId extends string = string,
 >(): IWizardContext<T, StepId> & {
-  store: WizardStore<T>;
+  store: WizardStore<T, StepId>;
 } {
   const state = useWizardState<T, StepId>();
   const actions = useWizardActions<StepId>();
 
-  // Backward compatibility: subscribe to everything
   const wizardData = useWizardSelector<T>((s) => s as T);
   const allErrors = useSyncExternalStore(
     state.store.subscribe,
@@ -922,12 +873,15 @@ export function useWizardContext<
   );
 
   return useMemo(
-    () => ({
-      ...state,
-      ...actions,
-      wizardData,
-      allErrors,
-    }),
+    () =>
+      ({
+        ...state,
+        ...actions,
+        wizardData,
+        allErrors,
+      }) as unknown as IWizardContext<T, StepId> & {
+        store: WizardStore<T, StepId>;
+      },
     [state, actions, wizardData, allErrors]
   );
 }

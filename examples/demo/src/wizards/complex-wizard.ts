@@ -4,6 +4,7 @@ import { z } from "zod";
 // 1. Define Schema with nested arrays
 export const complexSchema = z.object({
   parentName: z.string().min(1, "Parent name is required"),
+  parentAge: z.coerce.number().min(18, "Parent must be at least 18 years old"),
   children: z
     .array(
       z.object({

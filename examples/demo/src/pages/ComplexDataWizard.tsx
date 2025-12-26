@@ -32,7 +32,12 @@ import {
 const Step1 = React.memo(() => {
   const { setData } = useWizardActions();
   const parentName = useWizardValue("parentName");
+  const parentAge = useWizardValue("parentAge");
   const parentNameError = useWizardError("parentName");
+  const parentAgeError = useWizardError("parentAge");
+
+  console.log("parentName", parentName);
+  console.log("parentAge", parentAge);
 
   return (
     <div className="space-y-6">
@@ -48,6 +53,13 @@ const Step1 = React.memo(() => {
         value={parentName || ""}
         onChange={(e) => setData("parentName", e.target.value)}
         error={parentNameError}
+      />
+      <Input
+        label="Your Age"
+        placeholder="30"
+        value={parentAge || ""}
+        onChange={(e) => setData("parentAge", e.target.value)}
+        error={parentAgeError}
       />
     </div>
   );
@@ -72,6 +84,8 @@ const ChildRow = React.memo(
 
     const nameError = useWizardError(`children.${index}.name`);
     const ageError = useWizardError(`children.${index}.age`);
+
+    console.log("child", childId);
 
     return (
       <div className="p-4 border border-gray-100 rounded-lg bg-gray-50 space-y-4 relative">
@@ -137,6 +151,8 @@ const Step2 = React.memo(() => {
     },
     [setData, getData]
   );
+
+  console.log("childIds", childIds);
 
   return (
     <div className="space-y-6">
@@ -205,7 +221,7 @@ const wizardConfig: IWizardConfig<ComplexFormData, StepId> = {
       id: "parent",
       label: "Parent",
       validationAdapter: new ZodAdapter(
-        complexSchema.pick({ parentName: true })
+        complexSchema.pick({ parentName: true, parentAge: true })
       ),
     },
     {
@@ -227,6 +243,8 @@ const wizardConfig: IWizardConfig<ComplexFormData, StepId> = {
 const WizardInner = () => {
   const { currentStep, isLastStep, isLoading } = useWizardState();
   const { goToNextStep, clearStorage } = useWizardActions();
+
+  console.log("currentStep", currentStep);
 
   if (isLoading) {
     return (
