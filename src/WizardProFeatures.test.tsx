@@ -11,6 +11,7 @@ import {
   useWizardActions,
   useWizardState,
   useWizardError,
+  useWizardContext,
 } from "./context/WizardContext";
 import { WizardStepRenderer } from "./components/WizardStepRenderer";
 import { IStepConfig, IWizardConfig } from "./types";
@@ -117,45 +118,93 @@ describe("Wizard Pro Features", () => {
   });
 
   it("should respect beforeLeave guards", async () => {
-    render(
-      <WizardProvider config={{ steps }}>
-        <WizardConsumer />
+    const calls: string[] = [];
+    const guardedSteps: IStepConfig<any, any>[] = [
+      {
+        id: "a",
+        label: "A",
+        component: () => <div>Guard A</div>,
+        beforeLeave: async (data: any, dir: string) => {
+          calls.push(`a:${dir}`);
+          return !(dir === "next" && data.blockA);
+        },
+      },
+      {
+        id: "b",
+        label: "B",
+        component: () => <div>Guard B</div>,
+        // Returning undefined must NOT block: the guard is checked with a
+        // strict `=== false`.
+        beforeLeave: (_data: any, dir: string) => {
+          calls.push(`b:${dir}`);
+          return undefined as any;
+        },
+      },
+      { id: "c", label: "C", component: () => <div>Guard C</div> },
+    ];
+
+    const config = { steps: guardedSteps };
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <WizardProvider config={config} initialData={{}}>
+        {children}
         <WizardStepRenderer />
       </WizardProvider>
     );
+    const { result } = renderHook(() => useWizardContext<any>(), { wrapper });
+    await waitFor(() => expect(result.current.currentStepId).toBe("a"));
+    expect(screen.getByText("Guard A")).toBeInTheDocument();
 
-    // Enable step 2 first so we can reach step 3
-    await act(async () => {
-      screen.getByTestId("show-2-btn").click();
+    // Guard blocks forward navigation.
+    act(() => {
+      result.current.setData("blockA", true);
     });
-
-    await waitFor(() =>
-      expect(screen.getByTestId("steps-count")).toHaveTextContent("3")
-    );
-
-    // Go to step 2
     await act(async () => {
-      screen.getByTestId("next-btn").click();
+      await result.current.goToNextStep();
     });
-    await waitFor(() =>
-      expect(screen.getByTestId("current-step")).toHaveTextContent("step2")
-    );
+    expect(result.current.currentStepId).toBe("a");
+    expect(calls).toContain("a:next");
 
-    // Go to step 3
+    // goToStep reports the refusal.
+    let ok: boolean | undefined;
     await act(async () => {
-      screen.getByTestId("next-btn").click();
+      ok = await result.current.goToStep("b");
     });
-    await waitFor(() =>
-      expect(screen.getByTestId("current-step")).toHaveTextContent("step3")
-    );
+    expect(ok).toBe(false);
+    expect(result.current.currentStepId).toBe("a");
 
-    // Block movement from step 3
+    // Unblock and move on.
+    act(() => {
+      result.current.setData("blockA", false);
+    });
     await act(async () => {
-      screen.getByTestId("block-btn").click();
+      await result.current.goToNextStep();
     });
+    await waitFor(() => expect(result.current.currentStepId).toBe("b"));
 
-    // Try to go next from step 3 (currently last, but guard still called if next logic triggered or if we had step 4)
-    // Let's add a step 4 for clarity
+    // A guard returning undefined does not block.
+    await act(async () => {
+      await result.current.goToNextStep();
+    });
+    await waitFor(() => expect(result.current.currentStepId).toBe("c"));
+    expect(calls).toContain("b:next");
+    expect(screen.getByText("Guard C")).toBeInTheDocument();
+
+    // Leaving "c" calls no guard: step c declares none.
+    calls.length = 0;
+    await act(async () => {
+      result.current.goToPrevStep();
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.currentStepId).toBe("b"));
+    expect(calls).toEqual([]);
+
+    // Leaving "b" backwards does call its guard.
+    await act(async () => {
+      result.current.goToPrevStep();
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.currentStepId).toBe("a"));
+    expect(calls).toContain("b:prev");
   });
 
   it("should reset wizard state", async () => {
