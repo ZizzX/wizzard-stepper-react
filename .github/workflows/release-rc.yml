@@ -1,0 +1,80 @@
+name: Publish Release Candidate
+
+# Prereleases are cut by pushing a tag, not by merging to main. The tag is what
+# release-it creates (`npm run release:rc`), so the artifact published here is
+# exactly the commit that was tagged.
+on:
+  push:
+    tags:
+      - "v*-*"
+
+jobs:
+  publish-rc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Refuse to publish a stable version through the RC workflow
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "package version: $VERSION"
+          case "$VERSION" in
+            *-*) echo "prerelease, continuing" ;;
+            *) echo "::error::$VERSION is not a prerelease. Stable releases go through publish.yml."; exit 1 ;;
+          esac
+
+      - name: Refuse if the tag and package version disagree
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package version $VERSION"
+            exit 1
+          fi
+
+      # Same gate as a stable release. An RC that skipped the checks would tell
+      # us nothing about the release it is standing in for.
+      - run: pnpm lint
+      - run: npx tsc --noEmit
+      - run: pnpm test:run
+      - run: node scripts/smoke-dist.mjs 18
+      - run: node scripts/smoke-dist.mjs 19
+
+      - run: pnpm build
+
+      # `--tag next` keeps `latest` untouched: `npm i wizzard-stepper-react`
+      # still resolves to the current stable. Only an explicit
+      # `npm i wizzard-stepper-react@next` picks this up.
+      - run: pnpm publish --tag next --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          {
+            echo "### Release candidate published"
+            echo ""
+            echo '```'
+            echo "npm i wizzard-stepper-react@$VERSION"
+            echo "npm i wizzard-stepper-react@next"
+            echo '```'
+            echo ""
+            echo "\`latest\` is unchanged. When this RC checks out, promote it with the"
+            echo "**Promote to latest** workflow."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -29,16 +29,36 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # `npm run release:rc` commits and tags on the current branch. If that
+      # branch is main, this workflow fires for a prerelease version - which
+      # must never be published under the `latest` tag. Release candidates are
+      # published by release-rc.yml, off the tag.
+      - name: Skip prerelease versions
+        id: gate
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          case "$VERSION" in
+            *-*) echo "stable=false" >> "$GITHUB_OUTPUT"; echo "::notice::$VERSION is a prerelease - release-rc.yml owns it, nothing to do here." ;;
+            *)   echo "stable=true"  >> "$GITHUB_OUTPUT"; echo "publishing $VERSION" ;;
+          esac
+
       # Nothing reaches npm that has not been linted, type-checked, unit-tested
       # and smoke-tested as a built tarball against a real React consumer.
       - run: pnpm lint
+        if: steps.gate.outputs.stable == 'true'
       - run: npx tsc --noEmit
+        if: steps.gate.outputs.stable == 'true'
       - run: pnpm test:run
+        if: steps.gate.outputs.stable == 'true'
       - run: node scripts/smoke-dist.mjs 18
+        if: steps.gate.outputs.stable == 'true'
       - run: node scripts/smoke-dist.mjs 19
+        if: steps.gate.outputs.stable == 'true'
 
       - run: pnpm build
+        if: steps.gate.outputs.stable == 'true'
 
       - run: pnpm publish --no-git-checks
+        if: steps.gate.outputs.stable == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
