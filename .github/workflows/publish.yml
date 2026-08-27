@@ -28,6 +28,15 @@ jobs:
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
+
+      # Nothing reaches npm that has not been linted, type-checked, unit-tested
+      # and smoke-tested as a built tarball against a real React consumer.
+      - run: pnpm lint
+      - run: npx tsc --noEmit
+      - run: pnpm test:run
+      - run: node scripts/smoke-dist.mjs 18
+      - run: node scripts/smoke-dist.mjs 19
+
       - run: pnpm build
 
       - run: pnpm publish --no-git-checks
