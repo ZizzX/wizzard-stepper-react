@@ -1,5 +1,47 @@
 # Migration Guide
 
+## v3.0.0
+
+### Breaking: React 18 is now required
+
+`peerDependencies` previously advertised `react >= 16.8.0`, but the provider has
+been built on `useSyncExternalStore` since v2 — a React 18 API. On React 16/17 the
+package installed cleanly and then crashed on the first render.
+
+The range now says what the code actually needs:
+
+```diff
+- "react": ">=16.8.0"
++ "react": ">=18.0.0"
+```
+
+Nothing in the public API changed: every export, type and signature is identical
+to `2.0.1`. If you are already on React 18 or 19, upgrading is a drop-in
+replacement and requires no code changes.
+
+### Behaviour fixes included in this release
+
+These were bugs, not features — but if you worked around one of them, the
+workaround is now redundant:
+
+- **`clearData` now actually clears.** Its result used to be computed and then
+  discarded before reaching the store.
+- **`dependsOn` matches bracket paths.** A step declaring `dependsOn: ['items']`
+  now reacts to `setData('items[0].name', ...)`.
+- **Persisted navigation state is restored.** The stored `currentStepId` is no
+  longer overwritten by the first step on mount, and re-hydration no longer
+  resurrects steps that `dependsOn` had just invalidated.
+- **A throwing validation adapter no longer wipes existing error messages.**
+- **`updateData` preserves `Date`, `Map`, `Set` and `undefined`.** It used to
+  deep-clone through `JSON.parse(JSON.stringify(...))`. Nested objects are now
+  shared by reference instead of cloned; the library never mutates them.
+- **`onChange` validation is debounced per step** instead of through one shared
+  timer that let an edit on one step cancel another step's pending validation.
+- **`window.scrollTo` is guarded** for non-browser environments.
+- **`VALIDATE_END` carries the real validation result**, so middleware and
+  Redux DevTools no longer see a hardcoded `{ isValid: true }`.
+
+
 ## Upgrading to v1.8.0 (Internal Refactoring & Analytics)
 
 This version introduces internal refactoring to clarify the distinction between the Wizard Handle and the underlying Store, along with standardized analytics.

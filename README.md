@@ -64,7 +64,7 @@ const EmailInput = () => {
 ## ✨ Key Features
 
 - 🧠 **Headless Architecture**: Full control over UI. You bring the components, we provide the logic.
-- 💅 **Modern First**: Optimized for React 18 with selective rendering and external state store.
+- 💅 **Modern First**: Requires React 18+ (built on `useSyncExternalStore`) for selective rendering and an external state store.
 - 🔌 **Adapter Pattern**: Zero-dependency adapters for **Zod**, **Yup** validation.
 - 🏗️ **Complex Data**: Built-in support for nested objects using dot notation (`user.address.zip`).
 - 💾 **Advanced Persistence**: Auto-save to LocalStorage, SessionStorage, or Custom API adapters.
