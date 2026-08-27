@@ -18,10 +18,11 @@ import type {
   IWizardActions,
   IWizardStore,
   WizardEventHandler,
+  ValidationResult,
 } from "../types";
 import { WizardStore } from "../store/WizardStore";
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
-import { getByPath, setByPath } from "../utils/data";
+import { getByPath, shallowEqual, toPath } from "../utils/data";
 
 const WizardStateContext = createContext<IWizardState<any, any> | undefined>(
   undefined
@@ -65,6 +66,13 @@ export function WizardProvider<
   }
 
   const isInitialized = useRef(false);
+  // Captured once. Both INIT and `reset` read it from here so they agree on what
+  // "initial" means, and so an inline `initialData` literal cannot churn the
+  // identity of the actions context on every parent render.
+  const initialDataRef = useRef(initialData);
+  // Which persistence adapter we have already hydrated from. Keyed by identity
+  // rather than a plain boolean so swapping the adapter at runtime re-hydrates.
+  const hydratedFromRef = useRef<IPersistenceAdapter | null>(null);
 
   const persistenceAdapter = useMemo<IPersistenceAdapter>(() => {
     return localConfig.persistence?.adapter || new MemoryAdapter();
@@ -86,7 +94,6 @@ export function WizardProvider<
     visitedSteps,
     completedSteps,
     data: wizardData,
-    errors: {},
   } = snapshot;
 
   // 4. Stable Helpers (Mapping)
@@ -98,8 +105,15 @@ export function WizardProvider<
     return map;
   }, [localConfig.steps]);
 
+  // Consumers commonly wrap a hoisted steps array in an inline
+  // `config={{ steps }}` literal, which has a fresh identity on every parent
+  // render. Bail out when the fields are unchanged, otherwise each parent render
+  // re-creates stepsMap and re-runs the (possibly async) condition resolution.
+  // A config whose `steps` array is itself rebuilt inline every render cannot be
+  // recognised this way and still re-seeds; comparing step objects deeply is not
+  // worth it.
   useEffect(() => {
-    setLocalConfig(config);
+    setLocalConfig((prev) => (shallowEqual(prev, config) ? prev : config));
   }, [config]);
 
   // Directional navigation requires some indexes
@@ -130,10 +144,11 @@ export function WizardProvider<
     Map<StepId, { result: boolean; depsValues: any[] }>
   >(new Map());
 
-  // Validation Debounce Ref
-  const validationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  // Validation Debounce Timers, keyed by step id. One shared timer would let an
+  // edit on one step cancel a validation still pending for another.
+  const validationDebounceRef = useRef<
+    Map<StepId, ReturnType<typeof setTimeout>>
+  >(new Map());
 
   useEffect(() => {
     stateRef.current = {
@@ -152,10 +167,10 @@ export function WizardProvider<
 
   // Cleanup Debounce
   useEffect(() => {
+    const timers = validationDebounceRef.current;
     return () => {
-      if (validationDebounceRef.current) {
-        clearTimeout(validationDebounceRef.current);
-      }
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
     };
   }, []);
 
@@ -288,8 +303,15 @@ export function WizardProvider<
       nextBusy.add(stepId);
       storeRef.current.updateMeta({ busySteps: nextBusy, isBusy: true });
 
+      // Reported in `finally` so the action stream and any middleware see the
+      // real outcome. Errors themselves are written on the paths below, not by
+      // the reducer: a throwing adapter leaves this initializer in place, and
+      // wiping the user's error messages on a crash would be worse than keeping
+      // them.
+      let result: ValidationResult = { isValid: false };
+
       try {
-        const result = await step.validationAdapter.validate(data);
+        result = await step.validationAdapter.validate(data);
         if (result.isValid) {
           storeRef.current.setStepErrors(stepId, null);
           const nextErrorSteps = new Set(
@@ -340,7 +362,7 @@ export function WizardProvider<
         });
         storeRef.current.dispatch({
           type: "VALIDATE_END",
-          payload: { stepId, result: { isValid: true } } as any,
+          payload: { stepId, result },
         });
       }
     },
@@ -440,7 +462,7 @@ export function WizardProvider<
           to: stepId,
           timestamp: Date.now(),
         });
-        window.scrollTo(0, 0);
+        if (typeof window !== "undefined") window.scrollTo(0, 0);
         return true;
       } finally {
         storeRef.current.updateMeta({ isBusy: false });
@@ -490,7 +512,13 @@ export function WizardProvider<
         }
       }
     }
-  }, [goToStep, resolveActiveStepsHelper, validateStep, stepsMap]);
+  }, [
+    goToStep,
+    resolveActiveStepsHelper,
+    validateStep,
+    stepsMap,
+    localConfig.autoValidate,
+  ]);
 
   const goToPrevStep = useCallback(() => {
     const { currentStepId, activeSteps, activeStepsIndexMap } =
@@ -505,48 +533,88 @@ export function WizardProvider<
       const prevData = storeRef.current.getSnapshot().data;
       if (getByPath(prevData, path) === value) return;
 
-      let newData = setByPath(prevData, path, value);
-
-      // Auto-invalidation
-      localConfig.steps.forEach((step) => {
-        if (
-          step.dependsOn?.some((p) => path === p || path.startsWith(p + "."))
-        ) {
-          const nextComp = new Set(
-            storeRef.current.getSnapshot().completedSteps
-          );
-          if (nextComp.delete(step.id as StepId)) {
-            storeRef.current.dispatch({
-              type: "SET_COMPLETED_STEPS",
-              payload: { steps: nextComp },
-            });
-          }
-          const nextVis = new Set(storeRef.current.getSnapshot().visitedSteps);
-          if (nextVis.delete(step.id as StepId)) {
-            storeRef.current.dispatch({
-              type: "SET_VISITED_STEPS",
-              payload: { steps: nextVis },
-            });
-          }
-          if (step.clearData) {
-            if (typeof step.clearData === "function") {
-              newData = { ...newData, ...step.clearData(newData) };
-            } else {
-              (Array.isArray(step.clearData)
-                ? step.clearData
-                : [step.clearData]
-              ).forEach((p) => {
-                newData = setByPath(newData, p as string, undefined);
-              });
-            }
-          }
-        }
-      });
-
       storeRef.current.dispatch({
         type: "SET_DATA",
         payload: { path, value, options },
       });
+
+      // Auto-invalidation. Data mutations go through dispatch so the store stays
+      // the single source of truth and middleware sees them. The visited /
+      // completed sets are collected first and dispatched once each, instead of
+      // once per affected step, so a keystroke does not fan out into a burst of
+      // notifications.
+      const changedKeys = toPath(path);
+      const dependsOnChanged = (deps?: string[]) =>
+        !!deps?.some((p) => {
+          // Compare parsed segments so that bracket notation matches: a step
+          // declaring `items` must react to `items[0].name`.
+          const depKeys = toPath(p);
+          return (
+            changedKeys.length >= depKeys.length &&
+            depKeys.every((k, i) => changedKeys[i] === k)
+          );
+        });
+
+      const affected = localConfig.steps.filter((step) =>
+        dependsOnChanged(step.dependsOn)
+      );
+
+      if (affected.length) {
+        const snapshot = storeRef.current.getSnapshot();
+
+        const nextComp = new Set(snapshot.completedSteps);
+        const nextVis = new Set(snapshot.visitedSteps);
+        let compChanged = false;
+        let visChanged = false;
+        affected.forEach((step) => {
+          if (nextComp.delete(step.id as StepId)) compChanged = true;
+          if (nextVis.delete(step.id as StepId)) visChanged = true;
+        });
+        if (compChanged) {
+          storeRef.current.dispatch({
+            type: "SET_COMPLETED_STEPS",
+            payload: { steps: nextComp },
+          });
+        }
+        if (visChanged) {
+          storeRef.current.dispatch({
+            type: "SET_VISITED_STEPS",
+            payload: { steps: nextVis },
+          });
+        }
+
+        affected.forEach((step) => {
+          if (!step.clearData) return;
+
+          if (typeof step.clearData === "function") {
+            storeRef.current.dispatch({
+              type: "UPDATE_DATA",
+              payload: {
+                data: step.clearData(storeRef.current.getSnapshot().data),
+              },
+            });
+            return;
+          }
+
+          const paths = Array.isArray(step.clearData)
+            ? step.clearData
+            : [step.clearData];
+          const current = storeRef.current.getSnapshot().data;
+          const toClear = paths.filter(
+            (p) => getByPath(current, p as string) !== undefined
+          );
+          toClear.forEach((p) => {
+            storeRef.current.dispatch({
+              type: "SET_DATA",
+              payload: { path: p as string, value: undefined },
+            });
+          });
+        });
+      }
+
+      // Read back the committed data: validation and persistence must see the
+      // same state the store holds, cleared paths included.
+      const newData = storeRef.current.getSnapshot().data;
 
       if (currentStepId) {
         storeRef.current.deleteError(currentStepId, path);
@@ -561,13 +629,18 @@ export function WizardProvider<
             localConfig.validationDebounceTime ??
             300;
 
-          if (validationDebounceRef.current) {
-            clearTimeout(validationDebounceRef.current);
-          }
+          const stepId = currentStepId as StepId;
+          const timers = validationDebounceRef.current;
+          const pending = timers.get(stepId);
+          if (pending) clearTimeout(pending);
 
-          validationDebounceRef.current = setTimeout(() => {
-            validateStep(currentStepId as StepId, newData);
-          }, debounceMs);
+          timers.set(
+            stepId,
+            setTimeout(() => {
+              timers.delete(stepId);
+              validateStep(stepId, newData);
+            }, debounceMs)
+          );
         }
         if ((step?.persistenceMode || persistenceMode) === "onChange") {
           saveData("onChange", currentStepId as StepId, newData);
@@ -590,8 +663,8 @@ export function WizardProvider<
   );
 
   const reset = useCallback(() => {
-    storeRef.current.setInitialData(initialData || ({} as T));
-    storeRef.current.update((initialData || {}) as T);
+    storeRef.current.setInitialData(initialDataRef.current || ({} as T));
+    storeRef.current.update((initialDataRef.current || {}) as T);
     storeRef.current.updateErrors({});
     storeRef.current.dispatch({
       type: "SET_VISITED_STEPS",
@@ -626,8 +699,8 @@ export function WizardProvider<
       });
     }
     persistenceAdapter.clear();
-    trackEvent("wizard_reset", { data: initialData } as any);
-  }, [initialData, activeSteps, persistenceAdapter, trackEvent]);
+    trackEvent("wizard_reset", { data: initialDataRef.current } as any);
+  }, [activeSteps, persistenceAdapter, trackEvent]);
 
   // 7. Context Values
   const stateValue = useMemo<IWizardState<T, StepId>>(
@@ -698,22 +771,26 @@ export function WizardProvider<
       persistenceAdapter,
       localConfig.steps,
       saveData,
+      resolveActiveStepsHelper,
     ]
   );
 
   // 8. Lifecycle & Initialization
+  // `initialData` is read from the ref: an inline object literal would otherwise
+  // re-run this effect (and notify every subscriber through updateMeta) on every
+  // parent render.
   useEffect(() => {
     if (!isInitialized.current) {
       storeRef.current.dispatch({
         type: "INIT",
-        payload: { data: initialData || ({} as T), config: localConfig },
+        payload: { data: initialDataRef.current || ({} as T), config: localConfig },
       });
       isInitialized.current = true;
     } else {
       // Sync config if it changes, but don't reset data
       storeRef.current.updateMeta({ config: localConfig });
     }
-  }, [initialData, localConfig]);
+  }, [localConfig]);
 
   // Handle Dynamic Steps Resolution (Debounced)
   useEffect(() => {
@@ -736,13 +813,22 @@ export function WizardProvider<
 
   // Initial Step Selection and Hydration
   useEffect(() => {
-    // Basic Hydration from storage
-    const meta = persistenceAdapter.getStep<{
-      currentStepId: string;
-      visited: string[];
-      completed: string[];
-      history: string[];
-    }>(META_KEY);
+    // Hydration replays a stored snapshot of the navigation meta, so it must
+    // happen exactly once. This effect re-runs whenever `activeSteps` gets a
+    // new identity (the debounced condition resolution hands it a fresh array
+    // on every data change); replaying then would overwrite live state — most
+    // visibly undoing the visited/completed invalidation that `dependsOn`
+    // performs on `setData`.
+    const isNewAdapter = hydratedFromRef.current !== persistenceAdapter;
+    hydratedFromRef.current = persistenceAdapter;
+    const meta = isNewAdapter
+      ? persistenceAdapter.getStep<{
+          currentStepId: string;
+          visited: string[];
+          completed: string[];
+          history: string[];
+        }>(META_KEY)
+      : undefined;
     if (meta) {
       if (meta.currentStepId) {
         storeRef.current.dispatch({
@@ -771,7 +857,9 @@ export function WizardProvider<
     const currentSnapshot = storeRef.current.getSnapshot();
     const currentActiveSteps = currentSnapshot.activeSteps;
 
-    if (!currentStepId && currentActiveSteps.length > 0) {
+    // Must come from the snapshot: the dispatches above already moved the store,
+    // while the `currentStepId` render closure still holds the pre-hydration value.
+    if (!currentSnapshot.currentStepId && currentActiveSteps.length > 0) {
       const startId =
         initialStepId && currentActiveSteps.some((s) => s.id === initialStepId)
           ? initialStepId

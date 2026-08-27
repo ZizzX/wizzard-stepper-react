@@ -89,7 +89,7 @@ export class WizardStore<
   private internalDispatch(action: WizardAction<T, StepId>) {
     this.notifyActions(action);
     switch (action.type) {
-      case 'INIT':
+      case 'INIT': {
         this.initialData = JSON.parse(JSON.stringify(action.payload.data));
         const initialActiveSteps = action.payload.config.steps.filter((s: any) => !s.condition);
         this.state = {
@@ -101,6 +101,7 @@ export class WizardStore<
         };
         this.notify();
         break;
+      }
       case 'SET_CURRENT_STEP_ID':
         this.state = {
           ...this.state,
@@ -184,8 +185,10 @@ export class WizardStore<
     if (options?.replace) {
       newData = data as T;
     } else {
-      newData = JSON.parse(JSON.stringify(this.state.data));
-      Object.assign(newData as any, data);
+      // Shallow merge, not a JSON round-trip: the old deep clone destroyed
+      // Date/Map/Set/undefined values that callers legitimately keep in state,
+      // and bought nothing — only top-level keys are ever written here.
+      newData = { ...(this.state.data as any), ...data };
     }
     this.update(newData, Object.keys(data));
   }
