@@ -30,7 +30,7 @@ jobs:
 
       - name: Ensure an npm that can authenticate via OIDC
         run: |
-          npm install -g npm@latest
+          npm install -g npm@^11.5.1
           npm --version
 
       - run: pnpm install --frozen-lockfile
@@ -79,6 +79,7 @@ jobs:
             echo "npm i wizzard-stepper-react@next"
             echo '```'
             echo ""
-            echo "\`latest\` is unchanged. When this RC checks out, promote it with the"
-            echo "**Promote to latest** workflow."
+            echo "\`latest\` is unchanged. When this RC checks out, cut the stable"
+            echo "release from the same commit with \`pnpm release\` - see RELEASING.md."
+
           } >> "$GITHUB_STEP_SUMMARY"

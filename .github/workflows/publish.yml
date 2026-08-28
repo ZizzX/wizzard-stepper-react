@@ -30,7 +30,7 @@ jobs:
 
       - name: Ensure an npm that can authenticate via OIDC
         run: |
-          npm install -g npm@latest
+          npm install -g npm@^11.5.1
           npm --version
 
       - run: pnpm install --frozen-lockfile
