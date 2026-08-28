@@ -11,7 +11,7 @@
  * Usage: node scripts/smoke-dist.mjs [reactMajor]   (default: 18)
  */
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -114,11 +114,19 @@ const ROOT = resolve(import.meta.dirname, "..");
 const run = (cmd, args, cwd) =>
   execFileSync(cmd, args, { cwd, stdio: "inherit", shell: process.platform === "win32" });
 
-console.log(`\n[smoke] building and packing ${ROOT}`);
+const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+// Name the tarball explicitly. Globbing for the first *.tgz would happily pick
+// up one left behind by an earlier failed run and report a green smoke test for
+// a version that is not the one being published.
+const tarball = `${PKG.name.replace(/^@/, "").replace("/", "-")}-${PKG.version}.tgz`;
+
+console.log(`\n[smoke] building and packing ${PKG.name}@${PKG.version}`);
+rmSync(join(ROOT, tarball), { force: true });
 run("npm", ["run", "build"], ROOT);
 run("npm", ["pack", "--silent"], ROOT);
-const tarball = readdirSync(ROOT).find((f) => f.endsWith(".tgz"));
-if (!tarball) throw new Error("npm pack produced no tarball");
+if (!existsSync(join(ROOT, tarball))) {
+  throw new Error(`npm pack did not produce ${tarball}`);
+}
 
 const dir = mkdtempSync(join(tmpdir(), "wizzard-smoke-"));
 console.log(`[smoke] consumer: ${dir} (react@${REACT})`);
