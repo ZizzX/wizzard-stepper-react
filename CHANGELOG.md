@@ -1,5 +1,39 @@
 # Changelog
 
+# [3.0.0-rc.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v2.0.1...v3.0.0-rc.0) (2026-08-28)
+
+
+* feat!: require React 18 or newer ([ec63335](https://github.com/ZizzX/wizzard-stepper-react/commit/ec63335e9b134b40f1f0249bb54cbc5b67ee540c))
+
+
+### Bug Fixes
+
+* **core:** correct clearData, hydration, validation and data cloning ([a8bfa57](https://github.com/ZizzX/wizzard-stepper-react/commit/a8bfa57a61faa40a93e5b3b27801f191fa2de5bb))
+* **release:** let release-it own the version, and only publish new versions ([db6c5df](https://github.com/ZizzX/wizzard-stepper-react/commit/db6c5df374e9294c5a8974d156a824ad434333a0))
+* **release:** use a preset that actually exists ([a2b925c](https://github.com/ZizzX/wizzard-stepper-react/commit/a2b925c9e68378e11659fb8efafb522424d5d1cb))
+
+
+### BREAKING CHANGES
+
+* peerDependencies now require react and react-dom >= 18.0.0.
+
+The provider has been built on useSyncExternalStore - a React 18 API - since
+v2, but peerDependencies still advertised >= 16.8.0. On React 16 or 17 the
+package installed without a single warning, loaded fine, and then crashed on
+the first render because React.useSyncExternalStore was undefined. Narrowing
+a peer range is breaking per semver, hence the major.
+
+No code change is required for anyone already on React 18 or 19: every
+export, type and signature in dist/index.d.ts is byte-identical to 2.0.1.
+Verified by building both revisions and diffing the emitted declarations.
+
+Adding a use-sync-external-store shim to genuinely support 16.8+ was
+considered and rejected: it would be the library's first runtime dependency,
+for React versions that no longer have meaningful usage.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WAVcb8RWeqksGmPjw9GW3m
+
 ## [2.0.1](https://github.com/ZizzX/wizzard-stepper-react/compare/v2.0.0...v2.0.1) (2026-01-04)
 
 
