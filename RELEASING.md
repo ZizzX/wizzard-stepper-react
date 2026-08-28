@@ -48,15 +48,27 @@ whole class of "the RC passed but the release differs" problems.
 ## Stable release
 
 ```bash
+pnpm release:dry     # inspect the computed version and changelog
 pnpm release         # bumps, commits, tags, pushes
 ```
 
-Merging to `main` triggers `publish.yml`, which runs the gate and publishes
-under `latest`.
+Run it on `main`. The bump commit reaching `main` is what triggers
+`publish.yml`, which runs the gate and publishes under `latest`.
 
-`publish.yml` refuses to publish a prerelease version. If a `chore: release
-vX.Y.Z-rc.N` commit reaches `main`, the workflow no-ops instead of pushing a
-release candidate out to every consumer.
+## What decides that a release happens
+
+The version in `package.json`, not the push. Do not edit it by hand -
+`release-it` derives the next version from the commit history, so a manual bump
+gets counted twice (a hand-set `3.0.0` plus a `feat!` commit proposes
+`4.0.0`).
+
+`publish.yml` skips when:
+
+- the version is a prerelease - `release-rc.yml` owns those, and a candidate
+  must never go out under `latest`;
+- the version is already on npm - which is every ordinary merged pull request.
+
+So merging feature work to `main` is quiet. Only a release commit publishes.
 
 ## Rolling back
 
