@@ -30,8 +30,9 @@
     "test:coverage": "vitest run --coverage",
     "smoke": "node scripts/smoke-dist.mjs",
     "release": "release-it",
+    "release:dry": "release-it --dry-run --ci",
     "release:rc": "release-it --preRelease=rc",
-    "release:rc:dry": "release-it --preRelease=rc --dry-run",
+    "release:rc:dry": "release-it --preRelease=rc --dry-run --ci",
     "commit": "cz",
     "prepare": "husky || true"
   },
