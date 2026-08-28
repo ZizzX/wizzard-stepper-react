@@ -33,14 +33,27 @@ jobs:
       # branch is main, this workflow fires for a prerelease version - which
       # must never be published under the `latest` tag. Release candidates are
       # published by release-rc.yml, off the tag.
-      - name: Skip prerelease versions
+      # Most pushes to main are merged pull requests that do not change the
+      # version. Publishing is driven by the version in package.json: it happens
+      # only when `npm run release` has bumped it to something not yet on npm.
+      - name: Decide whether there is anything to publish
         id: gate
         run: |
           VERSION=$(node -p "require('./package.json').version")
           case "$VERSION" in
-            *-*) echo "stable=false" >> "$GITHUB_OUTPUT"; echo "::notice::$VERSION is a prerelease - release-rc.yml owns it, nothing to do here." ;;
-            *)   echo "stable=true"  >> "$GITHUB_OUTPUT"; echo "publishing $VERSION" ;;
+            *-*)
+              echo "stable=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::$VERSION is a prerelease - release-rc.yml owns it, nothing to do here."
+              exit 0
+              ;;
           esac
+          if npm view "wizzard-stepper-react@$VERSION" version >/dev/null 2>&1; then
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$VERSION is already on npm - nothing to publish."
+          else
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+            echo "publishing $VERSION"
+          fi
 
       # Nothing reaches npm that has not been linted, type-checked, unit-tested
       # and smoke-tested as a built tarball against a real React consumer.
