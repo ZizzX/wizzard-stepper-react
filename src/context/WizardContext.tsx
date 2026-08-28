@@ -22,7 +22,7 @@ import type {
 } from "../types";
 import { WizardStore } from "../store/WizardStore";
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
-import { getByPath, shallowEqual, toPath } from "../utils/data";
+import { getByPath, setByPath, shallowEqual, toPath } from "../utils/data";
 
 const WizardStateContext = createContext<IWizardState<any, any> | undefined>(
   undefined
@@ -66,10 +66,16 @@ export function WizardProvider<
   }
 
   const isInitialized = useRef(false);
-  // Captured once. Both INIT and `reset` read it from here so they agree on what
-  // "initial" means, and so an inline `initialData` literal cannot churn the
-  // identity of the actions context on every parent render.
+  // Read through a ref so an inline `initialData` literal cannot churn the
+  // identity of the actions context on every parent render. Kept in sync below,
+  // so `reset()` restores the data the consumer currently considers initial -
+  // the async-defaults pattern (render a placeholder, then supply fetched
+  // values) depends on that.
   const initialDataRef = useRef(initialData);
+  const lastConfigPropRef = useRef(config);
+  // Bumped whenever the user edits a step, so a validation that resolves after
+  // an edit can tell that its verdict is out of date.
+  const editEpochRef = useRef<Map<StepId, number>>(new Map());
   // Which persistence adapter we have already hydrated from. Keyed by identity
   // rather than a plain boolean so swapping the adapter at runtime re-hydrates.
   const hydratedFromRef = useRef<IPersistenceAdapter | null>(null);
@@ -113,7 +119,12 @@ export function WizardProvider<
   // recognised this way and still re-seeds; comparing step objects deeply is not
   // worth it.
   useEffect(() => {
-    setLocalConfig((prev) => (shallowEqual(prev, config) ? prev : config));
+    // Compare against the last prop we saw, not against localConfig:
+    // `updateConfig()` merges into localConfig, and comparing with that would
+    // treat the merge as a difference and revert it on the next parent render.
+    if (shallowEqual(lastConfigPropRef.current, config)) return;
+    lastConfigPropRef.current = config;
+    setLocalConfig(config);
   }, [config]);
 
   // Directional navigation requires some indexes
@@ -165,6 +176,10 @@ export function WizardProvider<
     };
   });
 
+  useEffect(() => {
+    initialDataRef.current = initialData;
+  });
+
   // Cleanup Debounce
   useEffect(() => {
     const timers = validationDebounceRef.current;
@@ -200,6 +215,40 @@ export function WizardProvider<
     },
     []
   );
+
+  // `saveData` routes writes to `step.persistenceAdapter || persistenceAdapter`,
+  // so clearing only the global one leaves per-step adapters holding data - and
+  // for a LocalStorageAdapter with its own prefix, data no clear the library
+  // performs can ever reach. Clear every distinct adapter that could have been
+  // written to.
+  const clearAllStorage = useCallback(() => {
+    const { persistenceAdapter: globalAdapter, stepsMap: steps } =
+      stateRef.current;
+    const adapters = new Set<IPersistenceAdapter>([globalAdapter]);
+    steps.forEach((step) => {
+      if (step.persistenceAdapter) adapters.add(step.persistenceAdapter);
+    });
+    adapters.forEach((a) => a.clear());
+  }, []);
+
+  // Navigation meta is persisted from a fresh snapshot by every path that
+  // changes it. Writing it only inside goToStep left the stored `completed` set
+  // one step behind - goToNextStep marks the step it just left as completed
+  // *after* goToStep returns - and left dependsOn invalidation unrecorded, so a
+  // reload resurrected steps whose prerequisite data had changed.
+  const persistNavigationMeta = useCallback(() => {
+    const { persistenceMode: mode, persistenceAdapter: adapter } =
+      stateRef.current;
+    if (mode === "manual") return;
+    const snap = storeRef.current.getSnapshot();
+    if (!snap.currentStepId) return;
+    adapter.saveStep(META_KEY, {
+      currentStepId: snap.currentStepId,
+      visited: Array.from(snap.visitedSteps),
+      completed: Array.from(snap.completedSteps),
+      history: snap.history,
+    });
+  }, []);
 
   // 6. Action Implementations
   const resolveActiveStepsHelper = useCallback(
@@ -295,6 +344,8 @@ export function WizardProvider<
       const step = stepsMap.get(stepId);
       if (!step || !step.validationAdapter) return true;
 
+      const epoch = editEpochRef.current.get(stepId) ?? 0;
+
       storeRef.current.dispatch({
         type: "VALIDATE_START",
         payload: { stepId },
@@ -312,6 +363,16 @@ export function WizardProvider<
 
       try {
         result = await step.validationAdapter.validate(data);
+
+        // A verdict describes the step's data as it was when validation
+        // started. If the user edited that step while an async adapter was in
+        // flight - fixing the very field that was invalid, say - writing the
+        // verdict now would resurrect an error they already cleared. Report it,
+        // record nothing.
+        if ((editEpochRef.current.get(stepId) ?? 0) !== epoch) {
+          return result.isValid;
+        }
+
         if (result.isValid) {
           storeRef.current.setStepErrors(stepId, null);
           const nextErrorSteps = new Set(
@@ -375,13 +436,8 @@ export function WizardProvider<
       providedActiveSteps?: IStepConfig<T, StepId>[],
       options: { validate?: boolean } = { validate: true }
     ): Promise<boolean> => {
-      const {
-        currentStepId,
-        config,
-        persistenceMode,
-        persistenceAdapter,
-        stepsMap,
-      } = stateRef.current;
+      const { currentStepId, config, persistenceMode, stepsMap } =
+        stateRef.current;
       const currentData = storeRef.current.getSnapshot().data;
 
       // Directions & Validation
@@ -446,14 +502,7 @@ export function WizardProvider<
           payload: { history: nextHistory },
         });
 
-        if (persistenceMode !== "manual") {
-          persistenceAdapter.saveStep(META_KEY, {
-            currentStepId: stepId,
-            visited: Array.from(nextVisited),
-            completed: Array.from(currentSnapshot.completedSteps),
-            history: nextHistory,
-          });
-        }
+        persistNavigationMeta();
 
         if (config.onStepChange)
           config.onStepChange(currentStepId || null, stepId, currentData);
@@ -468,7 +517,13 @@ export function WizardProvider<
         storeRef.current.updateMeta({ isBusy: false });
       }
     },
-    [resolveActiveStepsHelper, validateStep, saveData, trackEvent]
+    [
+      resolveActiveStepsHelper,
+      validateStep,
+      saveData,
+      trackEvent,
+      persistNavigationMeta,
+    ]
   );
 
   const goToNextStep = useCallback(async () => {
@@ -509,6 +564,7 @@ export function WizardProvider<
             type: "SET_COMPLETED_STEPS",
             payload: { steps: nextComp },
           });
+          persistNavigationMeta();
         }
       }
     }
@@ -518,6 +574,7 @@ export function WizardProvider<
     validateStep,
     stepsMap,
     localConfig.autoValidate,
+    persistNavigationMeta,
   ]);
 
   const goToPrevStep = useCallback(() => {
@@ -548,11 +605,15 @@ export function WizardProvider<
         !!deps?.some((p) => {
           // Compare parsed segments so that bracket notation matches: a step
           // declaring `items` must react to `items[0].name`.
+          // Overlap in either direction counts. Writing `user.country`
+          // changes a step that depends on `user`, and replacing `user`
+          // wholesale changes a step that depends on `user.country`.
           const depKeys = toPath(p);
-          return (
-            changedKeys.length >= depKeys.length &&
-            depKeys.every((k, i) => changedKeys[i] === k)
-          );
+          const shared = Math.min(changedKeys.length, depKeys.length);
+          for (let i = 0; i < shared; i++) {
+            if (changedKeys[i] !== depKeys[i]) return false;
+          }
+          return shared > 0;
         });
 
       const affected = localConfig.steps.filter((step) =>
@@ -582,6 +643,7 @@ export function WizardProvider<
             payload: { steps: nextVis },
           });
         }
+        if (compChanged || visChanged) persistNavigationMeta();
 
         affected.forEach((step) => {
           if (!step.clearData) return;
@@ -603,11 +665,18 @@ export function WizardProvider<
           const toClear = paths.filter(
             (p) => getByPath(current, p as string) !== undefined
           );
+          if (!toClear.length) return;
+
+          // One dispatch, not one per path: each SET_DATA runs a full
+          // syncDerivedState + notify over every subscriber, and this sits on
+          // the keystroke path.
+          let cleared = current;
           toClear.forEach((p) => {
-            storeRef.current.dispatch({
-              type: "SET_DATA",
-              payload: { path: p as string, value: undefined },
-            });
+            cleared = setByPath(cleared as any, p as string, undefined);
+          });
+          storeRef.current.dispatch({
+            type: "UPDATE_DATA",
+            payload: { data: cleared as any, options: { replace: true } },
           });
         });
       }
@@ -617,6 +686,11 @@ export function WizardProvider<
       const newData = storeRef.current.getSnapshot().data;
 
       if (currentStepId) {
+        const stepKey = currentStepId as StepId;
+        editEpochRef.current.set(
+          stepKey,
+          (editEpochRef.current.get(stepKey) ?? 0) + 1
+        );
         storeRef.current.deleteError(currentStepId, path);
         const step = stepsMap.get(currentStepId as StepId);
         if (
@@ -647,7 +721,7 @@ export function WizardProvider<
         }
       }
     },
-    [localConfig, validateStep, saveData]
+    [localConfig, validateStep, saveData, persistNavigationMeta]
   );
 
   const updateData = useCallback(
@@ -663,6 +737,11 @@ export function WizardProvider<
   );
 
   const reset = useCallback(() => {
+    // Drop queued onChange validations: their closures hold pre-reset data and
+    // would write the old errors back onto a wizard that was just cleared.
+    validationDebounceRef.current.forEach((timer) => clearTimeout(timer));
+    validationDebounceRef.current.clear();
+
     storeRef.current.setInitialData(initialDataRef.current || ({} as T));
     storeRef.current.update((initialDataRef.current || {}) as T);
     storeRef.current.updateErrors({});
@@ -698,9 +777,9 @@ export function WizardProvider<
         payload: { history: [] },
       });
     }
-    persistenceAdapter.clear();
+    clearAllStorage();
     trackEvent("wizard_reset", { data: initialDataRef.current } as any);
-  }, [activeSteps, persistenceAdapter, trackEvent]);
+  }, [activeSteps, trackEvent, clearAllStorage]);
 
   // 7. Context Values
   const stateValue = useMemo<IWizardState<T, StepId>>(
@@ -752,7 +831,7 @@ export function WizardProvider<
             saveData("manual", id as StepId, data)
           );
       },
-      clearStorage: () => persistenceAdapter.clear(),
+      clearStorage: clearAllStorage,
       reset,
       setData,
       updateData,
@@ -768,10 +847,10 @@ export function WizardProvider<
       reset,
       setData,
       updateData,
-      persistenceAdapter,
       localConfig.steps,
       saveData,
       resolveActiveStepsHelper,
+      clearAllStorage,
     ]
   );
 
@@ -889,6 +968,12 @@ export function WizardProvider<
         });
       }
 
+    }
+
+    // Outside the block above: a wizard that hydrated a persisted step never
+    // enters it, and this is the only place the initial loading flag is
+    // cleared.
+    if (currentSnapshot.activeSteps.length > 0) {
       storeRef.current.updateMeta({ isLoading: false });
     }
   }, [activeSteps, initialStepId, currentStepId, persistenceAdapter]);

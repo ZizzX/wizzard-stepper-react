@@ -149,9 +149,12 @@ export class WizardStore<
             ...this.state,
             busySteps: new Set(this.state.busySteps)
         };
-        if (action.payload.result.errors) {
-            this.setStepErrors(action.payload.stepId, action.payload.result.errors);
-        }
+        // Deliberately does not write errors. The payload became a real
+        // ValidationResult so that middleware and devtools see the truth, but
+        // writing it here too would be a second error path: a slow adapter that
+        // resolves after the user has already fixed the field would re-apply
+        // its stale error map on top of the correction. validateStep owns the
+        // writes.
         break;
       case 'SET_STEP_ERRORS':
         this.setStepErrors(action.payload.stepId, action.payload.errors);
