@@ -4,7 +4,7 @@ Two paths reach npm, and they are deliberately separate.
 
 | | Stable | Release candidate |
 |---|---|---|
-| Trigger | merge to `main` | push a `v*-*` tag |
+| Trigger | version bump commit reaches `main` | push a `v*-*` tag |
 | Workflow | `publish.yml` | `release-rc.yml` |
 | npm dist-tag | `latest` | `next` |
 | Who gets it | `npm i wizzard-stepper-react` | only `npm i wizzard-stepper-react@next` |
@@ -37,13 +37,23 @@ Further candidates are just `pnpm release:rc` again — `rc.0`, `rc.1`, …
 
 ## Promoting an RC
 
-When the candidate holds up, run the **Promote to latest** workflow from the
-Actions tab with the exact version (e.g. `3.0.0-rc.2`). It moves the `latest`
-dist-tag onto that already-published build — nothing is rebuilt, so the bits
-people install are the bits that were tested.
+Cut the stable release from the same commit:
 
-Prefer this over re-publishing a stable version with the same code: it removes a
-whole class of "the RC passed but the release differs" problems.
+```bash
+pnpm release:dry
+pnpm release
+```
+
+There is deliberately no dist-tag move. Two reasons:
+
+1. `latest` pointing at `3.0.0-rc.0` is a bad state — semver-aware tooling and
+   humans both read a prerelease version as "not the stable one".
+2. npm's trusted publishing does not support `npm dist-tag` over OIDC, so a
+   promote workflow would need a long-lived token, reintroducing exactly the
+   secret this setup removes.
+
+The RC and the stable build come from the same tree and pass the same gate; the
+only difference between the two tarballs is the version string.
 
 ## Stable release
 
@@ -70,9 +80,27 @@ gets counted twice (a hand-set `3.0.0` plus a `feat!` commit proposes
 
 So merging feature work to `main` is quiet. Only a release commit publishes.
 
+## Authentication
+
+Publishing uses npm [trusted publishing](https://docs.npmjs.com/trusted-publishers/):
+GitHub Actions mints a short-lived OIDC token, so there is no `NPM_TOKEN` secret
+to rotate or leak, and npm attaches a provenance attestation automatically.
+
+Both `publish.yml` and `release-rc.yml` must be registered as trusted publishers
+for the package on npmjs.com (Settings -> Trusted publishers), each with:
+
+- Organization or user: `ZizzX`
+- Repository: `wizzard-stepper-react`
+- Workflow filename: `publish.yml` / `release-rc.yml`
+
+This is why the publish step uses `npm publish` rather than `pnpm publish` -
+OIDC is only wired into the npm CLI - and why the workflows pin Node 24 and
+upgrade npm: trusted publishing needs Node >= 22.14 and npm >= 11.5.1.
+
 ## Rolling back
 
-Published versions cannot be replaced. Move the tag back instead:
+Published versions cannot be replaced. Move the tag back instead, from a
+machine logged in with `npm login` — dist-tag changes cannot go through OIDC:
 
 ```bash
 npm dist-tag add wizzard-stepper-react@<last-good-version> latest

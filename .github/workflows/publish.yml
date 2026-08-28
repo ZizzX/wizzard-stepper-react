@@ -21,11 +21,17 @@ jobs:
         with:
           version: 9
 
+      # Trusted publishing needs Node >= 22.14 and npm >= 11.5.1.
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
+
+      - name: Ensure an npm that can authenticate via OIDC
+        run: |
+          npm install -g npm@latest
+          npm --version
 
       - run: pnpm install --frozen-lockfile
 
@@ -71,7 +77,8 @@ jobs:
       - run: pnpm build
         if: steps.gate.outputs.stable == 'true'
 
-      - run: pnpm publish --no-git-checks
+      # npm publish, not pnpm publish: OIDC trusted publishing is only wired
+      # into the npm CLI. No token - the id-token permission above is the
+      # credential, and npm attaches provenance automatically.
+      - run: npm publish
         if: steps.gate.outputs.stable == 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
